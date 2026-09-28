@@ -1,0 +1,3072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Sustainable Sourcing HR Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --paper:#EEF1EF;
+    --panel:#FFFFFF;
+    --line:#D7DED9;
+    --ink:#1E2A28;
+    --ink-soft:#4B5A57;
+    --brand:#2B4A47;
+    --brand-dark:#1C3230;
+    --gold:#B4863B;
+    --gold-soft:#E8D6B4;
+    --green:#3F7A5C;
+    --green-bg:#E4EEE7;
+    --red:#A6483A;
+    --red-bg:#F3E3DF;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  h1,h2,h3,.serif{ font-family:'Fraunces', Georgia, serif; }
+  button{ font-family:inherit; cursor:pointer; }
+  input, select, textarea{ font-family:inherit; }
+
+  /* ---------- Login ---------- */
+  #login-screen{
+    min-height:100vh;
+    display:grid;
+    grid-template-columns: 1.1fr 1fr;
+  }
+  @media (max-width: 760px){
+    #login-screen{ grid-template-columns: 1fr; }
+    .brand-panel{ min-height:220px; }
+  }
+  .brand-panel{
+    background: var(--brand);
+    background-image: radial-gradient(circle at 15% 20%, rgba(255,255,255,0.06), transparent 45%),
+                       radial-gradient(circle at 85% 80%, rgba(255,255,255,0.05), transparent 40%);
+    color:#F3F1EA;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:56px 52px;
+  }
+  .brand-mark{
+    display:flex; align-items:center; gap:12px;
+  }
+  .brand-mark .glyph{
+    width:34px;height:34px;border-radius:3px;
+    background:var(--gold);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--brand-dark);
+    font-weight:600; font-size:15px; font-family:'Fraunces', serif;
+  }
+  .brand-mark span{ font-size:18px; letter-spacing:0.01em; }
+  .brand-logo{
+    height:38px; width:auto; display:block;
+    /* Logo art is dark-on-transparent; a light backing chip keeps it
+       readable against the dark green brand panel and sidebar. */
+    background:#F3F1EA; padding:6px 10px; border-radius:6px;
+  }
+  .brand-logo-sidebar{ height:32px; }
+  .brand-copy h1{
+    font-size:44px; font-weight:500; line-height:1.12; margin:0 0 18px 0;
+    max-width: 460px;
+  }
+  .brand-copy p{
+    font-size:16px; line-height:1.6; color:#CFE0DB; max-width:420px; margin:0;
+  }
+  .brand-foot{ font-size:13px; color:#9FB8B2; }
+
+  .login-panel{
+    display:flex; align-items:center; justify-content:center;
+    padding:40px;
+  }
+  .login-box{ width:100%; max-width:380px; }
+  .login-box h2{ font-size:26px; font-weight:500; margin:0 0 6px 0; }
+  .login-box .sub{ color:var(--ink-soft); font-size:14px; margin:0 0 28px 0; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:13px; color:var(--ink-soft); margin-bottom:6px; }
+  .field input, .field select{
+    width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:var(--radius);
+    font-size:15px; background:#fff; color:var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(43,74,71,0.12);
+  }
+  .btn-primary{
+    width:100%; padding:12px; background:var(--brand); color:#fff; border:none;
+    border-radius:var(--radius); font-size:15px; font-weight:500; margin-top:6px;
+  }
+  .btn-primary:hover{ background:var(--brand-dark); }
+  .error-msg{
+    background:var(--red-bg); color:var(--red); border-radius:var(--radius);
+    padding:10px 12px; font-size:13.5px; margin-bottom:16px;
+  }
+  .demo-note{
+    margin-top:22px; padding:14px 16px; background:var(--paper); border-radius:var(--radius);
+    font-size:12.5px; color:var(--ink-soft); line-height:1.6; border:1px solid var(--line);
+  }
+  .demo-note b{ color:var(--ink); }
+
+  /* ---------- App shell ---------- */
+  #app-screen{ display:none; min-height:100vh; }
+  .shell{ display:flex; min-height:100vh; }
+  .sidebar{
+    width:230px; background:var(--brand); color:#EFEDE6; flex-shrink:0;
+    display:flex; flex-direction:column; justify-content:space-between;
+    padding:24px 0;
+  }
+  .sidebar-top .brand-mark{ padding:0 22px 26px 22px; }
+  .sidebar-top .brand-mark span{ font-size:16px; }
+  nav.navlist{ display:flex; flex-direction:column; gap:2px; padding:0 12px; }
+  nav.navlist button{
+    text-align:left; background:none; border:none; color:#CFE0DB;
+    padding:11px 14px; border-radius:var(--radius); font-size:14.5px;
+  }
+  nav.navlist button:hover{ background:rgba(255,255,255,0.06); color:#fff; }
+  nav.navlist button.active{ background:rgba(255,255,255,0.12); color:#fff; font-weight:500; }
+  .sidebar-bottom{ padding:0 22px; }
+  .sidebar-bottom .who{ font-size:13.5px; color:#EFEDE6; margin-bottom:2px; }
+  .sidebar-bottom .role{ font-size:12px; color:#9FB8B2; margin-bottom:12px; }
+  .logout-btn{
+    background:none; border:1px solid rgba(255,255,255,0.25); color:#EFEDE6;
+    padding:8px 12px; border-radius:var(--radius); font-size:13px; width:100%;
+  }
+  .logout-btn:hover{ border-color:#fff; }
+
+  .main{ flex:1; padding:38px 48px; max-width:920px; }
+  .main h2.page-title{ font-size:28px; font-weight:500; margin:0 0 4px 0; }
+  .page-sub{ color:var(--ink-soft); font-size:14.5px; margin:0 0 30px 0; }
+
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:22px 24px; margin-bottom:16px;
+  }
+  .card h3{ font-size:16px; font-weight:600; margin:0 0 4px 0; font-family:'IBM Plex Sans'; }
+  .card .meta{ font-size:12.5px; color:var(--ink-soft); margin-bottom:10px; }
+  .card p.body-text{ font-size:14.5px; line-height:1.6; color:var(--ink); margin:0; }
+
+  .profile-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px 28px; }
+  .profile-grid .item .label{ font-size:12px; color:var(--ink-soft); margin-bottom:3px; }
+  .profile-grid .item .value{ font-size:15px; color:var(--ink); }
+  @media (max-width:600px){ .profile-grid{ grid-template-columns:1fr; } }
+
+  .tag{
+    display:inline-block; font-size:12px; padding:3px 10px; border-radius:100px; font-weight:500;
+  }
+  .tag.pending{ background:var(--gold-soft); color:#7A5A22; }
+  .tag.approved{ background:var(--green-bg); color:var(--green); }
+  .tag.denied{ background:var(--red-bg); color:var(--red); }
+
+  table{ width:100%; border-collapse:collapse; font-size:14px; }
+  table th{ text-align:left; font-size:12px; color:var(--ink-soft); padding:8px 10px; border-bottom:1px solid var(--line); font-weight:500; }
+  table td{ padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  table tr:last-child td{ border-bottom:none; }
+
+  .form-row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  @media (max-width:600px){ .form-row{ grid-template-columns:1fr; } }
+  textarea{ width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:var(--radius); font-size:14.5px; resize:vertical; min-height:80px; }
+  .btn-secondary{
+    padding:10px 18px; background:var(--gold); color:#3B2A0F; border:none; border-radius:var(--radius);
+    font-size:14px; font-weight:600;
+  }
+  .btn-secondary:hover{ background:#A0783A; }
+  .empty-state{ color:var(--ink-soft); font-size:14px; padding:20px 4px; }
+
+  /* ---------- Dashboard ---------- */
+  .dash-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:14px; }
+  @media (max-width:980px){ .dash-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width:560px){ .dash-grid{ grid-template-columns: 1fr; } }
+  .dash-widget{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px;
+  }
+  .dash-widget-title{ font-size:12.5px; color:var(--ink-soft); font-weight:500; }
+  .dash-widget-num{ font-family:'Fraunces', serif; font-size:22px; font-weight:500; color:var(--ink); margin-top:4px; }
+  .segmented-legend{ display:flex; gap:12px; font-size:11px; color:var(--ink-soft); flex-wrap:wrap; margin-top:8px; }
+  .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
+  .toast{
+    position:fixed; bottom:26px; right:26px; background:var(--brand-dark); color:#fff;
+    padding:12px 18px; border-radius:var(--radius); font-size:14px; box-shadow:0 6px 18px rgba(0,0,0,0.18);
+    opacity:0; transform:translateY(8px); transition:all .25s ease; pointer-events:none;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+  .contact-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--line); }
+  .contact-row:last-child{ border-bottom:none; }
+  .contact-row .name{ font-size:14.5px; font-weight:500; }
+  .contact-row .role{ font-size:12.5px; color:var(--ink-soft); }
+  .contact-row .contact-info{ text-align:right; font-size:13px; color:var(--ink-soft); }
+  .loading-note{ color:var(--ink-soft); font-size:13.5px; padding:20px 0; }
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(20,35,32,0.55);
+    display:flex; align-items:center; justify-content:center; z-index:100;
+  }
+  .modal-box{
+    background:var(--paper); border-radius:var(--radius); padding:26px 28px;
+    width:340px; max-width:90vw; box-shadow:0 12px 32px rgba(0,0,0,0.25);
+  }
+  .modal-box h3{ margin:0; font-size:18px; }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="login-screen">
+  <div class="brand-panel">
+    <div class="brand-mark">
+      <img class="brand-logo" src="data:image/png;base64,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" alt="Global Sustainable Sourcing logo">
+    </div>
+    <div class="brand-copy">
+      <h1>Everything you need from HR, in one place.</h1>
+      <p>Check your leave balance, submit time-off requests, read the latest company announcements, and find the right person on the HR team — all from one login.</p>
+    </div>
+    <div class="brand-foot">Global Sustainable Sourcing · Employee Portal</div>
+  </div>
+
+  <div class="login-panel">
+    <div class="login-box">
+      <h2>Sign in</h2>
+      <p class="sub">Use your employee ID and password.</p>
+      <div id="login-error" class="error-msg" style="display:none;"></div>
+      <div class="field">
+        <label for="emp-id">Employee ID</label>
+        <input id="emp-id" type="text" placeholder="e.g. EMP001" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="emp-pass">Password</label>
+        <input id="emp-pass" type="password" placeholder="Enter your password" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="login-btn">Sign in</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP SCREEN ============ -->
+<div id="app-screen">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand-mark">
+          <img class="brand-logo brand-logo-sidebar" src="data:image/png;base64,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" alt="Global Sustainable Sourcing logo">
+        </div>
+        <nav class="navlist" id="nav-list"></nav>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="who" id="who-name"></div>
+        <div class="role" id="who-role"></div>
+        <button class="logout-btn" id="logout-btn">Sign out</button>
+      </div>
+    </div>
+    <div class="main" id="main-content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="confirm-modal" style="display:none;">
+  <div class="modal-box">
+    <h3 id="confirm-modal-title">Confirm action</h3>
+    <p id="confirm-modal-message" class="page-sub" style="margin:6px 0 16px 0;"></p>
+    <div class="field" id="confirm-modal-extra-wrap" style="display:none;">
+      <label id="confirm-modal-extra-label">Value</label>
+      <input type="text" id="confirm-modal-extra">
+    </div>
+    <div class="field">
+      <label id="confirm-modal-password-label">Your password</label>
+      <input type="password" id="confirm-modal-password" autocomplete="current-password">
+    </div>
+    <p id="confirm-modal-error" style="color:var(--red); font-size:13px; display:none; margin:8px 0 0 0;"></p>
+    <div style="display:flex; gap:10px; margin-top:18px; justify-content:flex-end;">
+      <button class="btn-secondary" id="confirm-modal-cancel">Cancel</button>
+      <button class="btn-secondary" id="confirm-modal-confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  // ---------- Seed data ----------
+  const SEED_EMPLOYEES = [
+    { id:"EMP001", password:"password123", name:"John Doe", role:"employee", title:"Software Engineer II", department:"Engineering", email:"john.doe@gss-corp.com", phone:"(555) 011-2244", startDate:"2022-03-14", leaveBalance:12, monthlySalary:95000, travelAllowance:5000, lunchAllowance:3000, mobileAllowance:1500 },
+    { id:"EMP002", password:"password123", name:"Priya Nair", role:"employee", title:"Product Designer", department:"Design", email:"priya.nair@gss-corp.com", phone:"(555) 011-2255", startDate:"2023-07-01", leaveBalance:9, monthlySalary:82000, travelAllowance:4000, lunchAllowance:3000, mobileAllowance:1500 },
+    { id:"HR001", password:"hrpass123", name:"Grace Kim", role:"hr", title:"HR Manager", department:"Human Resources", email:"grace.kim@gss-corp.com", phone:"(555) 011-2200", startDate:"2019-01-10", leaveBalance:15, monthlySalary:110000, travelAllowance:6000, lunchAllowance:3500, mobileAllowance:2000 }
+  ];
+
+  const SEED_ANNOUNCEMENTS = [
+    { id:"a1", title:"Open enrollment starts October 1", date:"2026-09-05", author:"Grace Kim, HR", body:"Benefits open enrollment runs from October 1–15. Review your medical, dental, and vision options in the benefits portal and reach out to HR with any questions before the window closes." },
+    { id:"a2", title:"Office closed for Labor Day observance", date:"2026-08-28", author:"Grace Kim, HR", body:"The Dhaka and remote support desks will be closed on the upcoming public holiday. Normal hours resume the following business day." },
+    { id:"a3", title:"New parental leave policy in effect", date:"2026-08-01", author:"HR Policy Team", body:"Our updated parental leave policy now offers 16 weeks of paid leave for all primary caregivers, effective for any leave starting on or after this date. Full details are in the employee handbook." }
+  ];
+
+  const SEED_DIRECTORY = [
+    { name:"Grace Kim", role:"HR Manager", email:"grace.kim@gss-corp.com", phone:"(555) 011-2200" },
+    { name:"Omar Farouk", role:"Payroll & Benefits Specialist", email:"omar.farouk@gss-corp.com", phone:"(555) 011-2201" },
+    { name:"Lena Ostrowski", role:"Recruiting Lead", email:"lena.ostrowski@gss-corp.com", phone:"(555) 011-2202" },
+    { name:"Diego Marrero", role:"Employee Relations", email:"diego.marrero@gss-corp.com", phone:"(555) 011-2203" }
+  ];
+
+  const SEED_HOLIDAYS = [
+    { date:"2026-02-21", name:"International Mother Language Day" },
+    { date:"2026-03-26", name:"Independence Day" },
+    { date:"2026-04-14", name:"Bengali New Year (Pohela Boishakh)" },
+    { date:"2026-05-01", name:"May Day" },
+    { date:"2026-05-27", name:"Eid-ul-Fitr (subject to moon sighting)" },
+    { date:"2026-08-03", name:"Eid-ul-Adha (subject to moon sighting)" },
+    { date:"2026-12-16", name:"Victory Day" },
+    { date:"2026-12-25", name:"Christmas Day" }
+  ];
+
+  // ---------- Backend API helpers (PostgreSQL-backed) ----------
+  const API = "/api";
+
+  async function apiGet(path){
+    const r = await fetch(API + path);
+    if(!r.ok) throw new Error("GET " + path + " failed");
+    return r.json();
+  }
+
+  async function apiSend(path, method, body){
+    const r = await fetch(API + path, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: body !== undefined ? JSON.stringify(body) : undefined
+    });
+    if(!r.ok){
+      const err = await r.json().catch(()=>({error:"request failed"}));
+      const e = new Error(err.error || "request failed");
+      e.status = r.status;
+      throw e;
+    }
+    return r.json().catch(()=>({}));
+  }
+
+  // Generic collection save, used for non-sensitive collections
+  // (announcements, holidays, leave_requests, bill_claims).
+  async function saveCollection(key, value){
+    try{
+      await apiSend("/collections/" + key, "PUT", { value });
+      return true;
+    }catch(e){
+      console.error(e);
+      showToast("Couldn't save — check the server/database connection.");
+      return false;
+    }
+  }
+
+  // ---------- CSV download helper ----------
+  // columns: [{ label:"Name", key:"name" }] অথবা { label:"Name", value: row => row.name }
+  function downloadCSV(filename, columns, rows){
+    const escapeCell = (val) => {
+      if(val === null || val === undefined) return "";
+      const s = String(val).replace(/"/g, '""');
+      return /[",\n]/.test(s) ? `"${s}"` : s;
+    };
+    const header = columns.map(c => escapeCell(c.label)).join(",");
+    const lines = rows.map(row =>
+      columns.map(c => escapeCell(c.value ? c.value(row) : row[c.key])).join(",")
+    );
+    const csv = [header, ...lines].join("\n");
+    // \uFEFF (BOM) দিয়ে শুরু করলে Excel বাংলা/ইউনিকোড ক্যারেক্টার ঠিকমতো দেখায়
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("CSV ডাউনলোড শুরু হয়েছে।");
+  }
+
+  // columns: [{label, key, value?}], rows: array of objects. Uses the
+  // SheetJS library (loaded via CDN in <head>) to build a real .xlsx file
+  // entirely in the browser — no server round-trip needed.
+  function downloadExcel(filename, sheetName, columns, rows){
+    if(typeof XLSX === "undefined"){
+      showToast("Excel library didn't load — check your internet connection and try again.");
+      return;
+    }
+    const data = rows.map(row => {
+      const obj = {};
+      columns.forEach(c => { obj[c.label] = c.value ? c.value(row) : (row[c.key] ?? ""); });
+      return obj;
+    });
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName || "Sheet1");
+    XLSX.writeFile(workbook, filename);
+    showToast("Excel ডাউনলোড শুরু হয়েছে।");
+  }
+
+  function todayStamp(){
+    return new Date().toISOString().slice(0,10);
+  }
+
+  let state = {
+    employees: [],
+    announcements: [],
+    directory: [],
+    holidays: [],
+    leaveRequests: [],
+    billClaims: [],
+    attendance: [],
+    currentUser: null,
+    activeTab: "overview"
+  };
+
+  function showToast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(()=> t.classList.remove("show"), 2400);
+  }
+
+  // Asks the currently logged-in user to re-enter their password before a
+  // sensitive action (like removing an account, or resetting someone else's
+  // password). onConfirm receives (password, extraValue) and should return
+  // true/false (or a promise resolving to true/false) depending on whether
+  // the server accepted it.
+  // options.extraField (optional): { label, placeholder, minLength } — shows
+  // a second text input above the password field, e.g. for a new password.
+  function requireCurrentPassword(title, message, onConfirm, options){
+    options = options || {};
+    const overlay = document.getElementById("confirm-modal");
+    const pwInput = document.getElementById("confirm-modal-password");
+    const pwLabel = document.getElementById("confirm-modal-password-label");
+    const errorEl = document.getElementById("confirm-modal-error");
+    const extraWrap = document.getElementById("confirm-modal-extra-wrap");
+    const extraLabel = document.getElementById("confirm-modal-extra-label");
+    const extraInput = document.getElementById("confirm-modal-extra");
+
+    document.getElementById("confirm-modal-title").textContent = title;
+    document.getElementById("confirm-modal-message").textContent = message;
+    pwInput.value = "";
+    pwLabel.textContent = options.extraField ? "Your password (to confirm)" : "Your password";
+    errorEl.style.display = "none";
+
+    if(options.extraField){
+      extraWrap.style.display = "block";
+      extraLabel.textContent = options.extraField.label;
+      extraInput.type = options.extraField.type || "text";
+      extraInput.placeholder = options.extraField.placeholder || "";
+      extraInput.value = "";
+    }else{
+      extraWrap.style.display = "none";
+    }
+
+    overlay.style.display = "flex";
+    (options.extraField ? extraInput : pwInput).focus();
+
+    const cancelBtn = document.getElementById("confirm-modal-cancel");
+    const confirmBtn = document.getElementById("confirm-modal-confirm");
+    confirmBtn.textContent = options.confirmLabel || "Confirm";
+    if(options.destructive){
+      confirmBtn.style.background = "var(--red-bg)";
+      confirmBtn.style.color = "var(--red)";
+    }else{
+      confirmBtn.style.background = "";
+      confirmBtn.style.color = "";
+    }
+
+    const close = () => { overlay.style.display = "none"; };
+    const cancelHandler = () => close();
+    const confirmHandler = async () => {
+      const password = pwInput.value;
+      const extraValue = extraInput.value;
+      if(options.extraField){
+        const minLength = options.extraField.minLength || 1;
+        if(extraValue.length < minLength){
+          errorEl.textContent = `Please enter at least ${minLength} characters.`;
+          errorEl.style.display = "block";
+          return;
+        }
+      }
+      if(!password){
+        errorEl.textContent = "Please enter your password.";
+        errorEl.style.display = "block";
+        return;
+      }
+      confirmBtn.disabled = true;
+      const ok = await onConfirm(password, extraValue);
+      confirmBtn.disabled = false;
+      if(ok){
+        close();
+      }else{
+        errorEl.textContent = "That password is incorrect.";
+        errorEl.style.display = "block";
+      }
+    };
+    const enterHandler = (e) => { if(e.key === "Enter") confirmHandler(); };
+
+    cancelBtn.onclick = cancelHandler;
+    confirmBtn.onclick = confirmHandler;
+    pwInput.onkeydown = enterHandler;
+    extraInput.onkeydown = enterHandler;
+  }
+
+  function fmtDate(d){
+    try{
+      return new Date(d + "T00:00:00").toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" });
+    }catch(e){ return d; }
+  }
+
+  // ---------- Init ----------
+  async function init(){
+    try{
+      const data = await apiGet("/bootstrap");
+      state.employees = data.employees || [];
+      state.announcements = data.announcements || [];
+      state.directory = data.directory || [];
+      state.holidays = data.holidays || [];
+      state.leaveRequests = data.leaveRequests || [];
+      state.billClaims = data.billClaims || [];
+      state.attendance = data.attendance || [];
+    }catch(e){
+      console.error(e);
+      showToast("Couldn't reach the server. Is the backend running?");
+    }
+
+    document.getElementById("login-btn").addEventListener("click", handleLogin);
+    document.getElementById("emp-pass").addEventListener("keydown", e=>{ if(e.key === "Enter") handleLogin(); });
+    document.getElementById("logout-btn").addEventListener("click", handleLogout);
+  }
+
+  async function handleLogin(){
+    const id = document.getElementById("emp-id").value.trim().toUpperCase();
+    const pass = document.getElementById("emp-pass").value;
+    const errBox = document.getElementById("login-error");
+    let user;
+    try{
+      user = await apiSend("/login", "POST", { id, password: pass });
+    }catch(e){
+      errBox.textContent = "That employee ID or password doesn't match our records.";
+      errBox.style.display = "block";
+      return;
+    }
+    errBox.style.display = "none";
+    state.currentUser = user;
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app-screen").style.display = "block";
+    document.getElementById("who-name").textContent = user.name;
+    document.getElementById("who-role").textContent = user.title;
+    renderNav();
+    setTab(user.role === "hr" ? "dashboard" : "overview");
+  }
+
+  function handleLogout(){
+    state.currentUser = null;
+    document.getElementById("emp-id").value = "";
+    document.getElementById("emp-pass").value = "";
+    document.getElementById("app-screen").style.display = "none";
+    document.getElementById("login-screen").style.display = "grid";
+  }
+
+  function renderNav(){
+    const isHr = state.currentUser.role === "hr";
+    const tabs = [];
+    if(isHr) tabs.push({ key:"dashboard", label:"Dashboard" });
+    tabs.push(
+      { key:"overview", label:"My profile" },
+      { key:"announcements", label:"Announcements" },
+      { key:"leave", label:"Leave requests" },
+      { key:"bills", label:"Bill submission" },
+      { key:"payslips", label:"Payslips" },
+      { key:"holidays", label:"Company holidays" },
+      { key:"directory", label:"HR directory" }
+    );
+    if(isHr) tabs.push({ key:"empdirectory", label:"Employee directory" });
+    if(isHr) tabs.push({ key:"admin", label:"All requests" });
+    if(isHr) tabs.push({ key:"accounts", label:"Manage accounts" });
+    if(isHr) tabs.push({ key:"attendance", label:"Attendance" });
+    if(isHr) tabs.push({ key:"reports", label:"Reports" });
+
+    const nav = document.getElementById("nav-list");
+    nav.innerHTML = "";
+    tabs.forEach(t=>{
+      const btn = document.createElement("button");
+      btn.textContent = t.label;
+      btn.dataset.key = t.key;
+      btn.className = (state.activeTab === t.key) ? "active" : "";
+      btn.addEventListener("click", ()=> setTab(t.key));
+      nav.appendChild(btn);
+    });
+  }
+
+  function setTab(key){
+    state.activeTab = key;
+    renderNav();
+    const main = document.getElementById("main-content");
+    if(key === "dashboard") return renderDashboard(main);
+    if(key === "overview") return renderOverview(main);
+    if(key === "announcements") return renderAnnouncements(main);
+    if(key === "leave") return renderLeave(main);
+    if(key === "bills") return renderBills(main);
+    if(key === "payslips") return renderPayslips(main);
+    if(key === "holidays") return renderHolidays(main);
+    if(key === "directory") return renderDirectory(main);
+    if(key === "empdirectory") return renderEmpDirectory(main);
+    if(key === "admin") return renderAdmin(main);
+    if(key === "accounts") return renderAccounts(main);
+    if(key === "reports") return renderReports(main);
+    if(key === "attendance") return renderAttendance(main);
+  }
+
+  // ---------- Views ----------
+  const ICONS = {
+    people: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14c2.3.2 4 1.8 4.5 4"/></svg>`,
+    calendar: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>`,
+    receipt: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-2.5-1.6L13 21l-2.5-1.6L8 21l-2.5-1.6L6 21V3z"/><path d="M9 8h6M9 12h6"/></svg>`,
+    gift: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="9" width="17" height="11" rx="1.5"/><path d="M3.5 13h17M12 9v11"/><path d="M12 9c-1.5 0-3-1-3-2.6C9 5 10 4 11.2 4c1.4 0 2 1.3 2 2.4M12 9c1.5 0 3-1 3-2.6 0-1.4-1-2.4-2.2-2.4-1.4 0-2 1.3-2 2.4"/></svg>`
+  };
+
+  // ---------- Small chart helpers (pure CSS/SVG, no external libs) ----------
+  function donutGradient(segments){
+    // segments: [{value, color}] where values are percentages summing to <=100
+    let acc = 0;
+    const stops = [];
+    segments.forEach(s => {
+      const from = acc;
+      const to = acc + s.value;
+      stops.push(`${s.color} ${from}% ${to}%`);
+      acc = to;
+    });
+    if(acc < 100) stops.push(`var(--line) ${acc}% 100%`);
+    return `conic-gradient(${stops.join(", ")})`;
+  }
+
+  function donutWidget(segments, holeColor){
+    return `<div style="width:120px; height:120px; border-radius:50%; background:${donutGradient(segments)}; margin:8px auto; display:flex; align-items:center; justify-content:center;">
+      <div style="width:64px; height:64px; border-radius:50%; background:${holeColor || 'var(--panel)'};"></div>
+    </div>`;
+  }
+
+  function miniBarChart(data, color, opts){
+    opts = opts || {};
+    const max = opts.max || Math.max(1, ...data.map(d => d.value));
+    return `
+      <div style="display:flex; align-items:flex-end; gap:8px; height:90px; margin:14px 0 6px 0;">
+        ${data.map(d => `
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;">
+            <div style="width:100%; max-width:26px; height:${Math.max(4,(d.value/max)*100)}%; background:${d.highlight ? 'var(--gold)' : color}; border-radius:3px 3px 0 0;"></div>
+          </div>
+        `).join("")}
+      </div>
+      <div style="display:flex; gap:8px;">
+        ${data.map(d => `<div style="flex:1; text-align:center; font-size:11px; color:var(--ink-soft);">${d.label}</div>`).join("")}
+      </div>
+    `;
+  }
+
+  function areaChart(data, color){
+    const w = 260, h = 90, pad = 6;
+    const max = Math.max(1, ...data.map(d => d.value));
+    const stepX = (w - pad*2) / (data.length - 1 || 1);
+    const points = data.map((d,i) => {
+      const x = pad + i*stepX;
+      const y = h - pad - ((d.value/max) * (h - pad*2));
+      return [x,y];
+    });
+    const linePath = points.map((p,i) => (i===0?"M":"L") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    const areaPath = linePath + ` L${points[points.length-1][0].toFixed(1)} ${h-pad} L${points[0][0].toFixed(1)} ${h-pad} Z`;
+    return `
+      <svg viewBox="0 0 ${w} ${h}" style="width:100%; height:90px; margin:10px 0 4px 0;">
+        <path d="${areaPath}" fill="${color}" opacity="0.16"></path>
+        <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2.2"></path>
+        ${points.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="2.6" fill="${color}"></circle>`).join("")}
+      </svg>
+      <div style="display:flex; gap:4px;">
+        ${data.map(d => `<div style="flex:1; text-align:center; font-size:11px; color:var(--ink-soft);">${d.label}</div>`).join("")}
+      </div>
+    `;
+  }
+
+  const DEPT_COLORS = ["#2B4A47","#B4863B","#3F7A5C","#A6483A","#5B7A9A","#8A6BAA"];
+
+  function renderDashboard(main){
+    const u = state.currentUser;
+    const today = new Date();
+
+    // ---- department breakdown ----
+    const deptCounts = {};
+    state.employees.forEach(e => { deptCounts[e.department] = (deptCounts[e.department]||0) + 1; });
+    const deptEntries = Object.entries(deptCounts).sort((a,b)=> b[1]-a[1]);
+    const totalEmployees = state.employees.length;
+    const hrCount = state.employees.filter(e => e.role === "hr").length;
+    const empCount = totalEmployees - hrCount;
+
+    // ---- leave stats ----
+    const pendingLeave = state.leaveRequests.filter(r => r.status === "pending").length;
+    const approvedLeave = state.leaveRequests.filter(r => r.status === "approved").length;
+    const deniedLeave = state.leaveRequests.filter(r => r.status === "denied").length;
+    const totalLeave = pendingLeave + approvedLeave + deniedLeave;
+    const leaveApprovalRate = totalLeave > 0 ? Math.round((approvedLeave/totalLeave)*100) : 0;
+
+    // ---- bill claim stats ----
+    const pendingBills = state.billClaims.filter(b => b.status === "pending").length;
+    const approvedBills = state.billClaims.filter(b => b.status === "approved").length;
+    const deniedBills = state.billClaims.filter(b => b.status === "denied").length;
+    const totalBills = pendingBills + approvedBills + deniedBills;
+    const billApprovalRate = (approvedBills+deniedBills) > 0 ? Math.round((approvedBills/(approvedBills+deniedBills))*100) : 0;
+
+    // ---- avg salary by department ----
+    const deptSalary = {};
+    const deptSalaryCount = {};
+    state.employees.forEach(e => {
+      deptSalary[e.department] = (deptSalary[e.department]||0) + (e.monthlySalary||0);
+      deptSalaryCount[e.department] = (deptSalaryCount[e.department]||0) + 1;
+    });
+    const avgSalaryByDept = Object.keys(deptSalary).map(dep => ({ label: dep.slice(0,4), value: Math.round(deptSalary[dep]/deptSalaryCount[dep]) }));
+    const companyAvgSalary = totalEmployees > 0 ? Math.round(state.employees.reduce((s,e)=> s+(e.monthlySalary||0),0)/totalEmployees) : 0;
+
+    // ---- avg leave balance by department ----
+    const deptLeave = {};
+    state.employees.forEach(e => { deptLeave[e.department] = (deptLeave[e.department]||0) + (e.leaveBalance||0); });
+    const avgLeaveByDept = Object.keys(deptLeave).map(dep => ({ label: dep.slice(0,4), value: Math.round(deptLeave[dep]/deptSalaryCount[dep]) }));
+
+    // ---- reimbursement trend, last 6 months ----
+    const months = [];
+    for(let i=5;i>=0;i--){ months.push(new Date(today.getFullYear(), today.getMonth()-i, 1)); }
+    const reimbTrend = months.map(m => ({
+      label: m.toLocaleDateString(undefined,{month:"short"}),
+      value: state.billClaims.filter(b => {
+        if(b.status !== "approved") return false;
+        const bd = new Date(b.date + "T00:00:00");
+        return bd.getFullYear()===m.getFullYear() && bd.getMonth()===m.getMonth();
+      }).reduce((s,b)=> s+b.amount, 0)
+    }));
+
+    // ---- hiring trend, last 6 months ----
+    const hireTrend = months.map(m => ({
+      label: m.toLocaleDateString(undefined,{month:"short"}),
+      value: state.employees.filter(e => {
+        const sd = new Date(e.startDate + "T00:00:00");
+        return sd.getFullYear()===m.getFullYear() && sd.getMonth()===m.getMonth();
+      }).length
+    }));
+
+    // ---- department pie (as conic-gradient) ----
+    const deptPieSegments = deptEntries.map(([dep,count], i) => ({
+      value: Math.round((count/totalEmployees)*100),
+      color: DEPT_COLORS[i % DEPT_COLORS.length],
+      label: dep, count
+    }));
+
+    main.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h2 class="page-title" style="margin-bottom:2px;">HR dashboard</h2>
+          <p class="page-sub" style="margin:0;">Workforce, leave, and reimbursement overview.</p>
+        </div>
+        <span class="tag" style="background:var(--brand); color:#fff; font-size:12.5px; padding:6px 14px;">${today.toLocaleDateString(undefined,{ month:"long", year:"numeric" })}</span>
+      </div>
+
+      <div class="dash-grid">
+
+        <div class="dash-widget">
+          <div class="dash-widget-title">Filter</div>
+          <div style="font-size:12.5px; color:var(--ink-soft); margin-bottom:12px;">All departments · ${today.toLocaleDateString(undefined,{month:"long", year:"numeric"})}</div>
+          <div class="field" style="margin-bottom:10px;"><label>Department</label>
+            <select id="dash-dept-filter">
+              <option value="">All departments</option>
+              ${deptEntries.map(([dep])=> `<option value="${dep}">${dep}</option>`).join("")}
+            </select>
+          </div>
+          <div style="font-size:12px; color:var(--ink-soft);">Filters the headcount and department split widgets.</div>
+        </div>
+
+        <div class="dash-widget" id="dash-headcount-widget">
+          <div class="dash-widget-title">Number of employees</div>
+          <div class="dash-widget-num">${totalEmployees}</div>
+          ${miniBarChart(deptEntries.map(([dep,count])=> ({label:dep.slice(0,4), value:count})), "var(--brand)")}
+        </div>
+
+        <div class="dash-widget">
+          <div class="dash-widget-title">Employee structure</div>
+          <div style="display:flex; justify-content:space-around; align-items:center; margin-top:20px;">
+            <div style="text-align:center;">
+              <div style="font-size:20px; font-weight:600; font-family:'Fraunces',serif;">${totalEmployees ? Math.round((empCount/totalEmployees)*100) : 0}%</div>
+              <div style="color:var(--brand); margin:6px 0;">${ICONS.people}</div>
+              <div style="font-size:12px; color:var(--ink-soft);">Employees</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:20px; font-weight:600; font-family:'Fraunces',serif;">${totalEmployees ? Math.round((hrCount/totalEmployees)*100) : 0}%</div>
+              <div style="color:var(--gold); margin:6px 0;">${ICONS.people}</div>
+              <div style="font-size:12px; color:var(--ink-soft);">HR admins</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-widget">
+          <div class="dash-widget-title">Leave approval rate</div>
+          <div class="dash-widget-num">${leaveApprovalRate}%</div>
+          ${donutWidget([{value:leaveApprovalRate, color:"var(--green)"}])}
+          <button class="btn-secondary" data-goto="admin" style="width:100%; margin-top:6px;">Review requests</button>
+        </div>
+
+        <div class="dash-widget">
+          <div class="dash-widget-title">Avg monthly salary</div>
+          <div class="dash-widget-num">৳${companyAvgSalary.toLocaleString()}</div>
+          ${miniBarChart(avgSalaryByDept, "var(--brand)")}
+        </div>
+
+        <div class="dash-widget">
+          <div class="dash-widget-title">Bill claim approval rate</div>
+          <div class="dash-widget-num">${billApprovalRate}%</div>
+          ${donutWidget([{value:billApprovalRate, color:"var(--gold)"}])}
+        </div>
+
+        <div class="dash-widget">
+          <div class="dash-widget-title">Reimbursements trend</div>
+          <div class="dash-widget-num">৳${reimbTrend.reduce((s,d)=>s+d.value,0).toLocaleString()}</div>
+          ${areaChart(reimbTrend, "var(--green)")}
+        </div>
+
+        <div class="dash-widget">
+          <div class="dash-widget-title">Avg leave balance / dept</div>
+          <div class="dash-widget-num">${totalEmployees ? Math.round(state.employees.reduce((s,e)=>s+(e.leaveBalance||0),0)/totalEmployees) : 0} days</div>
+          ${miniBarChart(avgLeaveByDept, "var(--green)")}
+        </div>
+
+        <div class="dash-widget">
+          <div class="dash-widget-title">Hiring trend</div>
+          <div class="dash-widget-num">${hireTrend.reduce((s,d)=>s+d.value,0)} new</div>
+          ${areaChart(hireTrend, "var(--brand)")}
+        </div>
+
+        <div class="dash-widget">
+          <div class="dash-widget-title">Leave requests by status</div>
+          <div class="dash-widget-num">${totalLeave}</div>
+          ${donutWidget([
+            {value: totalLeave? Math.round((pendingLeave/totalLeave)*100):0, color:"var(--gold)"},
+            {value: totalLeave? Math.round((approvedLeave/totalLeave)*100):0, color:"var(--green)"},
+            {value: totalLeave? Math.round((deniedLeave/totalLeave)*100):0, color:"var(--red)"}
+          ])}
+          <div class="segmented-legend" style="justify-content:center;">
+            <span><span class="dot" style="background:var(--gold);"></span>Pending ${pendingLeave}</span>
+            <span><span class="dot" style="background:var(--green);"></span>Approved ${approvedLeave}</span>
+            <span><span class="dot" style="background:var(--red);"></span>Denied ${deniedLeave}</span>
+          </div>
+        </div>
+
+        <div class="dash-widget">
+          <div class="dash-widget-title">Bill claims by status</div>
+          <div class="dash-widget-num">${totalBills}</div>
+          ${miniBarChart([
+            {label:"Pending", value:pendingBills},
+            {label:"Approved", value:approvedBills},
+            {label:"Denied", value:deniedBills}
+          ], "var(--brand)")}
+        </div>
+
+        <div class="dash-widget" id="dash-deptpie-widget">
+          <div class="dash-widget-title">Department split</div>
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div style="width:110px; height:110px; border-radius:50%; background:${donutGradient(deptPieSegments)}; flex-shrink:0;"></div>
+            <div style="font-size:12px; color:var(--ink-soft); line-height:2;">
+              ${deptPieSegments.map(s => `<div><span class="dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${s.color}; margin-right:6px;"></span>${s.label} (${s.count})</div>`).join("")}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    `;
+
+    main.querySelectorAll("[data-goto]").forEach(btn=>{
+      btn.addEventListener("click", ()=> setTab(btn.dataset.goto));
+    });
+
+    document.getElementById("dash-dept-filter").addEventListener("change", (e)=>{
+      const dept = e.target.value;
+      const filteredEmployees = dept ? state.employees.filter(emp => emp.department === dept) : state.employees;
+      const hcWidget = document.getElementById("dash-headcount-widget");
+      const counts = {};
+      filteredEmployees.forEach(emp => { counts[emp.department] = (counts[emp.department]||0) + 1; });
+      const entries = Object.entries(counts).sort((a,b)=> b[1]-a[1]);
+      hcWidget.querySelector(".dash-widget-num").textContent = filteredEmployees.length;
+      const chartHTML = miniBarChart(entries.map(([dep,count])=> ({label:dep.slice(0,4), value:count})), "var(--brand)");
+      hcWidget.querySelectorAll(":scope > div").forEach((el,i)=>{ if(i>=2) el.remove(); });
+      hcWidget.insertAdjacentHTML("beforeend", chartHTML);
+    });
+  }
+
+  function renderOverview(main){
+    const u = state.currentUser;
+    const myPending = state.leaveRequests.filter(r => r.employeeId === u.id && r.status === "pending").length;
+    const today = new Date();
+    const nextHoliday = [...state.holidays]
+      .filter(h => new Date(h.date + "T00:00:00") >= today)
+      .sort((a,b)=> new Date(a.date) - new Date(b.date))[0];
+
+    main.innerHTML = `
+      <h2 class="page-title">My profile</h2>
+      <p class="page-sub">Your basic employment details on file with HR.</p>
+
+      <div class="profile-grid" style="margin-bottom:16px;">
+        <div class="card" style="margin-bottom:0;">
+          <div class="meta">Leave balance</div>
+          <h3 style="font-size:22px; margin:0;">${u.leaveBalance} days</h3>
+        </div>
+        <div class="card" style="margin-bottom:0;">
+          <div class="meta">Pending requests</div>
+          <h3 style="font-size:22px; margin:0;">${myPending}</h3>
+        </div>
+        <div class="card" style="margin-bottom:0;">
+          <div class="meta">Next company holiday</div>
+          <h3 style="font-size:16px; margin:0;">${nextHoliday ? nextHoliday.name + " · " + fmtDate(nextHoliday.date) : "None scheduled"}</h3>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="profile-grid">
+          <div class="item"><div class="label">Full name</div><div class="value">${u.name}</div></div>
+          <div class="item"><div class="label">Employee ID</div><div class="value">${u.id}</div></div>
+          <div class="item"><div class="label">Title</div><div class="value">${u.title}</div></div>
+          <div class="item"><div class="label">Department</div><div class="value">${u.department}</div></div>
+          <div class="item"><div class="label">Start date</div><div class="value">${fmtDate(u.startDate)}</div></div>
+          <div class="item"><div class="label">Leave balance</div><div class="value">${u.leaveBalance} days</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Contact details</h3>
+        <p class="meta">Keep this up to date — it's what HR and colleagues use to reach you.</p>
+        <div class="form-row">
+          <div class="field"><label>Email</label><input type="email" id="pf-email" value="${u.email}"></div>
+          <div class="field"><label>Phone</label><input type="text" id="pf-phone" value="${u.phone}"></div>
+        </div>
+        <button class="btn-secondary" id="pf-save">Save changes</button>
+      </div>
+    `;
+
+    document.getElementById("pf-save").addEventListener("click", async ()=>{
+      const email = document.getElementById("pf-email").value.trim();
+      const phone = document.getElementById("pf-phone").value.trim();
+      if(!email){
+        showToast("Email can't be empty.");
+        return;
+      }
+      try{
+        await apiSend("/employees/" + u.id, "PATCH", { email, phone });
+      }catch(e){
+        showToast("Couldn't save — check the server/database connection.");
+        return;
+      }
+      u.email = email;
+      u.phone = phone;
+      const idx = state.employees.findIndex(e => e.id === u.id);
+      if(idx > -1) state.employees[idx] = u;
+      showToast("Contact details updated.");
+      renderOverview(main);
+    });
+  }
+
+  function renderAnnouncements(main){
+    const isHr = state.currentUser.role === "hr";
+    const items = [...state.announcements].sort((a,b)=> new Date(b.date) - new Date(a.date));
+    const now = new Date();
+    const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+    main.innerHTML = `
+      <h2 class="page-title">Announcements</h2>
+      <p class="page-sub">Company-wide updates from HR.</p>
+      ${isHr ? `
+        <div class="card">
+          <h3>Post a new announcement</h3>
+          <div class="field" style="margin-top:10px;"><label>Title</label><input type="text" id="an-title" placeholder="e.g. Office closed for public holiday"></div>
+          <div class="field"><label>Message</label><textarea id="an-body" placeholder="What do employees need to know?"></textarea></div>
+          <button class="btn-secondary" id="an-submit">Post announcement</button>
+        </div>
+      ` : ``}
+      ${items.map(a => {
+        const ageMs = now - new Date(a.date + "T00:00:00");
+        const isOld = ageMs > ONE_WEEK;
+        return `
+        <div class="card" style="${isOld ? "opacity:0.68; border-left:3px solid var(--line);" : "border-left:3px solid var(--gold);"}">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+            <h3 style="margin:0;">${a.title}</h3>
+            <span class="tag" style="${isOld ? "background:var(--line); color:var(--ink-soft);" : "background:var(--gold-soft); color:#7A5A22;"} flex-shrink:0;">${isOld ? "Older" : "New"}</span>
+          </div>
+          <div class="meta">${fmtDate(a.date)} · ${a.author}</div>
+          <p class="body-text">${a.body}</p>
+          ${isHr ? `<button class="btn-secondary" data-del-ann="${a.id}" style="margin-top:12px; padding:6px 10px; font-size:12.5px; background:var(--red-bg); color:var(--red);">Remove</button>` : ``}
+        </div>
+      `;}).join("")}
+    `;
+
+    if(isHr){
+      document.getElementById("an-submit").addEventListener("click", async ()=>{
+        const title = document.getElementById("an-title").value.trim();
+        const body = document.getElementById("an-body").value.trim();
+        if(!title || !body){
+          showToast("Add a title and a message before posting.");
+          return;
+        }
+        state.announcements.push({
+          id: "a_" + Date.now(),
+          title, body,
+          date: new Date().toISOString().slice(0,10),
+          author: state.currentUser.name + ", HR"
+        });
+        await saveCollection("announcements", state.announcements);
+        showToast("Announcement posted.");
+        renderAnnouncements(main);
+      });
+      main.querySelectorAll("[data-del-ann]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          state.announcements = state.announcements.filter(a => a.id !== btn.dataset.delAnn);
+          await saveCollection("announcements", state.announcements);
+          showToast("Announcement removed.");
+          renderAnnouncements(main);
+        });
+      });
+    }
+  }
+
+  function renderLeave(main){
+    const u = state.currentUser;
+    const mine = state.leaveRequests.filter(r => r.employeeId === u.id).sort((a,b)=> new Date(b.submitted) - new Date(a.submitted));
+    main.innerHTML = `
+      <h2 class="page-title">Leave requests</h2>
+      <p class="page-sub">Current balance: <b>${u.leaveBalance} days</b>. Submit a new request below.</p>
+
+      <div class="card">
+        <h3>New request</h3>
+        <div class="form-row" style="margin-top:12px;">
+          <div class="field"><label>Start date</label><input type="date" id="lv-start"></div>
+          <div class="field"><label>End date</label><input type="date" id="lv-end"></div>
+        </div>
+        <div class="field" style="margin-top:6px;"><label>Reason</label><textarea id="lv-reason" placeholder="Brief reason for the request"></textarea></div>
+        <button class="btn-secondary" id="lv-submit">Submit request</button>
+      </div>
+
+      <h3 style="margin:26px 0 10px 0;">Your request history</h3>
+      <div class="card" style="padding:0;">
+        ${mine.length === 0 ? `<div class="empty-state" style="padding:22px 24px;">You haven't submitted any leave requests yet.</div>` : `
+        <table>
+          <tr><th>Dates</th><th>Reason</th><th>Status</th></tr>
+          ${mine.map(r => `
+            <tr>
+              <td>${fmtDate(r.start)} – ${fmtDate(r.end)}</td>
+              <td>${r.reason}</td>
+              <td><span class="tag ${r.status}">${r.status[0].toUpperCase() + r.status.slice(1)}</span></td>
+            </tr>
+          `).join("")}
+        </table>`}
+      </div>
+    `;
+
+    document.getElementById("lv-submit").addEventListener("click", async ()=>{
+      const start = document.getElementById("lv-start").value;
+      const end = document.getElementById("lv-end").value;
+      const reason = document.getElementById("lv-reason").value.trim();
+      if(!start || !end || !reason){
+        showToast("Fill in start date, end date, and a reason.");
+        return;
+      }
+      if(new Date(end) < new Date(start)){
+        showToast("End date can't be before the start date.");
+        return;
+      }
+      const req = {
+        id: "lv_" + Date.now(),
+        employeeId: u.id,
+        employeeName: u.name,
+        start, end, reason,
+        status: "pending",
+        submitted: new Date().toISOString()
+      };
+      state.leaveRequests.push(req);
+      await saveCollection("leave_requests", state.leaveRequests);
+      showToast("Leave request submitted.");
+      renderLeave(main);
+    });
+  }
+
+  function renderBills(main){
+    const u = state.currentUser;
+    const mine = state.billClaims.filter(b => b.employeeId === u.id).sort((a,b)=> new Date(b.submitted) - new Date(a.submitted));
+    const totalPending = mine.filter(b => b.status === "pending").reduce((s,b)=> s + b.amount, 0);
+
+    main.innerHTML = `
+      <h2 class="page-title">Bill submission</h2>
+      <p class="page-sub">Submit a reimbursement claim for travel, lunch, mobile, or other work expenses.</p>
+
+      <div class="card">
+        <h3>New bill claim</h3>
+        <div class="form-row" style="margin-top:12px;">
+          <div class="field"><label>Category</label>
+            <select id="bl-category">
+              <option value="Travel">Travel</option>
+              <option value="Lunch">Lunch</option>
+              <option value="Mobile">Mobile</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Date of expense</label><input type="date" id="bl-date"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Amount (৳)</label><input type="number" id="bl-amount" placeholder="e.g. 1200"></div>
+          <div></div>
+        </div>
+        <div class="field"><label>Description</label><textarea id="bl-desc" placeholder="What was this expense for?"></textarea></div>
+        <div class="field">
+          <label>Proof document (PDF)</label>
+          <input type="file" id="bl-proof" accept="application/pdf">
+        </div>
+        <button class="btn-secondary" id="bl-submit">Submit claim</button>
+      </div>
+
+      <h3 style="margin:26px 0 10px 0;">Your claim history ${totalPending > 0 ? `· ৳${totalPending.toLocaleString()} pending` : ""}</h3>
+      <div class="card" style="padding:0;">
+        ${mine.length === 0 ? `<div class="empty-state" style="padding:22px 24px;">You haven't submitted any bill claims yet.</div>` : `
+        <table>
+          <tr><th>Category</th><th>Date</th><th>Amount</th><th>Description</th><th>Proof</th><th>Status</th></tr>
+          ${mine.map(b => `
+            <tr>
+              <td>${b.category}</td>
+              <td>${fmtDate(b.date)}</td>
+              <td>৳${b.amount.toLocaleString()}</td>
+              <td>${b.description}</td>
+              <td>${b.proofFileData ? `<a href="${b.proofFileData}" target="_blank" rel="noopener">${b.proofFileName || "View PDF"}</a>` : "—"}</td>
+              <td><span class="tag ${b.status}">${b.status[0].toUpperCase() + b.status.slice(1)}</span></td>
+            </tr>
+          `).join("")}
+        </table>`}
+      </div>
+    `;
+
+    document.getElementById("bl-submit").addEventListener("click", async ()=>{
+      const category = document.getElementById("bl-category").value;
+      const date = document.getElementById("bl-date").value;
+      const amount = parseInt(document.getElementById("bl-amount").value, 10);
+      const description = document.getElementById("bl-desc").value.trim();
+      const fileInput = document.getElementById("bl-proof");
+      const file = fileInput.files && fileInput.files[0];
+
+      if(!date || !amount || amount <= 0 || !description){
+        showToast("Fill in the date, a valid amount, and a description.");
+        return;
+      }
+      if(file && file.type !== "application/pdf"){
+        showToast("Proof document must be a PDF file.");
+        return;
+      }
+      const MAX_PDF_BYTES = 3 * 1024 * 1024; // keep well under the 5MB storage limit per key
+      if(file && file.size > MAX_PDF_BYTES){
+        showToast("That PDF is too large (max 3MB). Try a smaller scan.");
+        return;
+      }
+
+      let proofFileData = null;
+      let proofFileName = null;
+      if(file){
+        proofFileData = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        proofFileName = file.name;
+      }
+
+      state.billClaims.push({
+        id: "bl_" + Date.now(),
+        employeeId: u.id,
+        employeeName: u.name,
+        category, date, amount, description,
+        proofFileData, proofFileName,
+        status: "pending",
+        submitted: new Date().toISOString()
+      });
+      await saveCollection("bill_claims", state.billClaims);
+      showToast("Bill claim submitted.");
+      renderBills(main);
+    });
+  }
+
+  const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  function yearsFromDates(dates){
+    const years = new Set(dates.filter(Boolean).map(d => new Date(d).getFullYear()).filter(y => !isNaN(y)));
+    years.add(new Date().getFullYear());
+    return [...years].sort((a,b)=> b - a);
+  }
+
+  function renderBillsAdmin(main, filters){
+    filters = filters || { category: "all", month: "all", year: "all" };
+    const allItems = [...state.billClaims].sort((a,b)=> new Date(b.submitted) - new Date(a.submitted));
+
+    const items = allItems.filter(b => {
+      if(filters.category !== "all" && b.category !== filters.category) return false;
+      if(filters.month !== "all" || filters.year !== "all"){
+        const d = new Date(b.date);
+        if(isNaN(d)) return false;
+        if(filters.month !== "all" && d.getMonth() !== parseInt(filters.month, 10)) return false;
+        if(filters.year !== "all" && d.getFullYear() !== parseInt(filters.year, 10)) return false;
+      }
+      return true;
+    });
+
+    const pendingCount = items.filter(b => b.status === "pending").length;
+    const approvedTotal = items.filter(b => b.status === "approved").reduce((s,b)=> s + b.amount, 0);
+    const byCategory = {};
+    items.forEach(b => { byCategory[b.category] = (byCategory[b.category] || 0) + b.amount; });
+
+    const years = yearsFromDates(allItems.map(b => b.date));
+    const categories = ["Travel", "Lunch", "Mobile", "Other"];
+
+    main.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h2 class="page-title">All bill claims</h2>
+          <p class="page-sub">HR view — approve or deny expense claims from any employee.</p>
+        </div>
+        <button class="btn-secondary" id="bl-download" style="flex-shrink:0;">⬇ Download CSV</button>
+      </div>
+
+      <div class="card" style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="field" style="margin:0;">
+          <label>Category</label>
+          <select id="bl-filter-category">
+            <option value="all" ${filters.category === "all" ? "selected" : ""}>All categories</option>
+            ${categories.map(c => `<option value="${c}" ${filters.category === c ? "selected" : ""}>${c}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field" style="margin:0;">
+          <label>Month</label>
+          <select id="bl-filter-month">
+            <option value="all" ${filters.month === "all" ? "selected" : ""}>All months</option>
+            ${MONTH_NAMES.map((m, i) => `<option value="${i}" ${filters.month == i ? "selected" : ""}>${m}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field" style="margin:0;">
+          <label>Year</label>
+          <select id="bl-filter-year">
+            <option value="all" ${filters.year === "all" ? "selected" : ""}>All years</option>
+            ${years.map(y => `<option value="${y}" ${filters.year == y ? "selected" : ""}>${y}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+
+      <div class="profile-grid" style="margin-bottom:16px;">
+        <div class="card" style="margin-bottom:0;"><div class="meta">Pending claims</div><h3 style="font-size:22px; margin:0;">${pendingCount}</h3></div>
+        <div class="card" style="margin-bottom:0;"><div class="meta">Approved (total paid)</div><h3 style="font-size:22px; margin:0;">৳${approvedTotal.toLocaleString()}</h3></div>
+        <div class="card" style="margin-bottom:0;"><div class="meta">By category</div><h3 style="font-size:13.5px; margin:0; font-family:'IBM Plex Sans'; font-weight:400; line-height:1.6;">${Object.keys(byCategory).length ? Object.entries(byCategory).map(([k,v])=> `${k}: ৳${v.toLocaleString()}`).join("<br>") : "No claims match this filter"}</h3></div>
+      </div>
+
+      <div class="card" style="padding:0;">
+        ${items.length === 0 ? `<div class="empty-state" style="padding:22px 24px;">No bill claims match this filter.</div>` : `
+        <table>
+          <tr><th>Employee</th><th>Category</th><th>Date</th><th>Amount</th><th>Description</th><th>Proof</th><th>Status</th><th></th></tr>
+          ${items.map(b => `
+            <tr>
+              <td>${b.employeeName}</td>
+              <td>${b.category}</td>
+              <td>${fmtDate(b.date)}</td>
+              <td>৳${b.amount.toLocaleString()}</td>
+              <td>${b.description}</td>
+              <td>${b.proofFileData ? `<a href="${b.proofFileData}" target="_blank" rel="noopener">${b.proofFileName || "View PDF"}</a>` : "—"}</td>
+              <td><span class="tag ${b.status}">${b.status[0].toUpperCase() + b.status.slice(1)}</span></td>
+              <td>
+                ${b.status === "pending" ? `
+                  <button class="btn-secondary" data-approve-bill="${b.id}" style="padding:6px 10px; font-size:12.5px; margin-right:6px;">Approve</button>
+                  <button class="btn-secondary" data-deny-bill="${b.id}" style="padding:6px 10px; font-size:12.5px; background:var(--red-bg); color:var(--red);">Deny</button>
+                ` : ``}
+              </td>
+            </tr>
+          `).join("")}
+        </table>`}
+      </div>
+    `;
+
+    const readFilters = () => ({
+      category: document.getElementById("bl-filter-category").value,
+      month: document.getElementById("bl-filter-month").value,
+      year: document.getElementById("bl-filter-year").value
+    });
+    ["bl-filter-category", "bl-filter-month", "bl-filter-year"].forEach(id => {
+      document.getElementById(id).addEventListener("change", ()=> renderBillsAdmin(main, readFilters()));
+    });
+
+    document.getElementById("bl-download").addEventListener("click", ()=>{
+      downloadCSV(`bill_claims_${todayStamp()}.csv`, [
+        { label:"Employee", key:"employeeName" },
+        { label:"Employee ID", key:"employeeId" },
+        { label:"Category", key:"category" },
+        { label:"Date", key:"date" },
+        { label:"Amount", key:"amount" },
+        { label:"Description", key:"description" },
+        { label:"Status", key:"status" },
+        { label:"Submitted", key:"submitted" }
+      ], items);
+    });
+
+    main.querySelectorAll("[data-approve-bill]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        await updateBillStatus(btn.dataset.approveBill, "approved");
+        renderBillsAdmin(main, filters);
+      });
+    });
+    main.querySelectorAll("[data-deny-bill]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        await updateBillStatus(btn.dataset.denyBill, "denied");
+        renderBillsAdmin(main, filters);
+      });
+    });
+  }
+
+  async function updateBillStatus(id, status){
+    const b = state.billClaims.find(x => x.id === id);
+    if(!b) return;
+    try{
+      await apiSend("/bill-claims/" + id, "PATCH", { status });
+    }catch(e){
+      showToast("Couldn't update — check the server/database connection.");
+      return;
+    }
+    b.status = status;
+    showToast(`Claim ${status}. Employee notified by email.`);
+  }
+
+  function renderDirectory(main){
+    main.innerHTML = `
+      <h2 class="page-title">HR directory</h2>
+      <p class="page-sub">Reach out to the right person on the HR team.</p>
+      <div class="card">
+        ${state.directory.map(c => `
+          <div class="contact-row">
+            <div>
+              <div class="name">${c.name}</div>
+              <div class="role">${c.role}</div>
+            </div>
+            <div class="contact-info">${c.email}<br>${c.phone}</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  const FX_RATE_USD_TO_BDT = 122; // approximate, for display only
+
+  function renderPayslips(main, currency){
+    currency = currency || "BDT";
+    const u = state.currentUser;
+    const salary = u.monthlySalary || 60000;
+    const travel = u.travelAllowance || 0;
+    const lunch = u.lunchAllowance || 0;
+    const mobile = u.mobileAllowance || 0;
+    const grossPay = salary + travel + lunch + mobile;
+    const tax = Math.round(salary * 0.10);
+    const providentFund = Math.round(salary * 0.05);
+    const totalDeductions = tax + providentFund;
+    const baseNet = grossPay - totalDeductions;
+
+    const symbol = currency === "USD" ? "$" : "৳";
+    const conv = (amountBdt) => currency === "USD" ? Math.round(amountBdt / FX_RATE_USD_TO_BDT) : amountBdt;
+    const fmt = (amountBdt) => symbol + conv(amountBdt).toLocaleString();
+
+    const months = [];
+    const d = new Date();
+    for(let i=0;i<6;i++){
+      months.push(new Date(d.getFullYear(), d.getMonth() - i, 1));
+    }
+
+    // approved bill claims for this employee, grouped by month
+    const approvedClaims = state.billClaims.filter(b => b.employeeId === u.id && b.status === "approved");
+    function reimbForMonth(m){
+      return approvedClaims
+        .filter(b => {
+          const bd = new Date(b.date + "T00:00:00");
+          return bd.getFullYear() === m.getFullYear() && bd.getMonth() === m.getMonth();
+        })
+        .reduce((s,b)=> s + b.amount, 0);
+    }
+    const currentMonthReimb = reimbForMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+    const currentMonthNet = baseNet + currentMonthReimb;
+
+    main.innerHTML = `
+      <h2 class="page-title">Payslips</h2>
+      <p class="page-sub">Your last 6 months of pay, including allowances and approved reimbursements. Auto-generated from what HR has on file for you.</p>
+
+      <div class="field" style="max-width:220px; margin-bottom:18px;">
+        <label>Currency</label>
+        <select id="pay-currency">
+          <option value="BDT" ${currency === "BDT" ? "selected" : ""}>Taka (৳ BDT)</option>
+          <option value="USD" ${currency === "USD" ? "selected" : ""}>Dollar ($ USD)</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <h3>Pay breakdown (current month)</h3>
+        <table style="margin-top:10px;">
+          <tr><th>Earnings</th><th></th></tr>
+          <tr><td>Base salary</td><td>${fmt(salary)}</td></tr>
+          <tr><td>Travel allowance</td><td>${fmt(travel)}</td></tr>
+          <tr><td>Lunch allowance</td><td>${fmt(lunch)}</td></tr>
+          <tr><td>Mobile allowance</td><td>${fmt(mobile)}</td></tr>
+          <tr><td><b>Gross pay</b></td><td><b>${fmt(grossPay)}</b></td></tr>
+        </table>
+        <table style="margin-top:14px;">
+          <tr><th>Deductions</th><th></th></tr>
+          <tr><td>Income tax</td><td>-${fmt(tax)}</td></tr>
+          <tr><td>Provident fund</td><td>-${fmt(providentFund)}</td></tr>
+          <tr><td><b>Net after deductions</b></td><td><b>${fmt(baseNet)}</b></td></tr>
+        </table>
+        <table style="margin-top:14px;">
+          <tr><th>Approved reimbursements this month</th><th></th></tr>
+          <tr><td>Approved bill claims (travel, lunch, mobile, other)</td><td>+${fmt(currentMonthReimb)}</td></tr>
+          <tr><td><b>Net pay (with reimbursements)</b></td><td><b>${fmt(currentMonthNet)}</b></td></tr>
+        </table>
+      </div>
+
+      <h3 style="margin:26px 0 10px 0;">History</h3>
+      <div class="card" style="padding:0;">
+        <table>
+          <tr><th>Month</th><th>Gross pay</th><th>Deductions</th><th>Reimbursements</th><th>Net pay</th><th></th></tr>
+          ${months.map((m,i) => {
+            const reimb = reimbForMonth(m);
+            const net = baseNet + reimb;
+            return `
+            <tr>
+              <td>${m.toLocaleDateString(undefined,{ month:"long", year:"numeric" })}</td>
+              <td>${fmt(grossPay)}</td>
+              <td>-${fmt(totalDeductions)}</td>
+              <td>${reimb > 0 ? "+" + fmt(reimb) : "—"}</td>
+              <td><b>${fmt(net)}</b></td>
+              <td><button class="btn-secondary" data-download-month="${i}" style="padding:6px 10px; font-size:12.5px;">Download</button></td>
+            </tr>
+          `;}).join("")}
+        </table>
+      </div>
+      <div class="card">
+        <h3>Questions about your pay?</h3>
+        <p class="body-text">Figures shown here are simplified estimates for this portal, using the allowances HR has on file for you and any bill claims marked approved. USD figures use an approximate fixed exchange rate for display only. For official payslips or tax documents, contact Payroll through the HR directory.</p>
+      </div>
+    `;
+
+    document.getElementById("pay-currency").addEventListener("change", (e)=>{
+      renderPayslips(main, e.target.value);
+    });
+
+    main.querySelectorAll("[data-download-month]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const idx = parseInt(btn.dataset.downloadMonth, 10);
+        const m = months[idx];
+        const monthLabel = m.toLocaleDateString(undefined,{ month:"long", year:"numeric" });
+        const reimb = reimbForMonth(m);
+        downloadPayslip({
+          employeeName: u.name, employeeId: u.id, title: u.title, department: u.department,
+          monthLabel, symbol,
+          salary: conv(salary), travel: conv(travel), lunch: conv(lunch), mobile: conv(mobile),
+          grossPay: conv(grossPay), tax: conv(tax), providentFund: conv(providentFund),
+          totalDeductions: conv(totalDeductions), reimbursements: conv(reimb),
+          net: conv(baseNet + reimb), currency
+        });
+      });
+    });
+  }
+
+  function downloadPayslip(p){
+    const lines = [
+      "GLOBAL SUSTAINABLE SOURCING",
+      "Payslip",
+      "",
+      `Employee: ${p.employeeName} (${p.employeeId})`,
+      `Title: ${p.title}`,
+      `Department: ${p.department}`,
+      `Pay period: ${p.monthLabel}`,
+      `Currency: ${p.currency}`,
+      "",
+      "EARNINGS",
+      `  Base salary            ${p.symbol}${p.salary.toLocaleString()}`,
+      `  Travel allowance        ${p.symbol}${p.travel.toLocaleString()}`,
+      `  Lunch allowance         ${p.symbol}${p.lunch.toLocaleString()}`,
+      `  Mobile allowance        ${p.symbol}${p.mobile.toLocaleString()}`,
+      `  Gross pay               ${p.symbol}${p.grossPay.toLocaleString()}`,
+      "",
+      "DEDUCTIONS",
+      `  Income tax              -${p.symbol}${p.tax.toLocaleString()}`,
+      `  Provident fund          -${p.symbol}${p.providentFund.toLocaleString()}`,
+      `  Total deductions        -${p.symbol}${p.totalDeductions.toLocaleString()}`,
+      "",
+      "REIMBURSEMENTS",
+      `  Approved bill claims     +${p.symbol}${(p.reimbursements||0).toLocaleString()}`,
+      "",
+      `NET PAY: ${p.symbol}${p.net.toLocaleString()}`,
+      "",
+      "This is a system-generated payslip for portal demonstration purposes."
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Payslip_${p.employeeId}_${p.monthLabel.replace(" ", "_")}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("Payslip downloaded.");
+  }
+
+  function renderHolidays(main){
+    const isHr = state.currentUser.role === "hr";
+    const today = new Date();
+    const items = [...state.holidays].sort((a,b)=> new Date(a.date) - new Date(b.date));
+    main.innerHTML = `
+      <h2 class="page-title">Company holidays</h2>
+      <p class="page-sub">Observed holidays for the year. Dates for lunar-calendar holidays are estimates and may shift.</p>
+      ${isHr ? `
+        <div class="card">
+          <h3>Add a holiday</h3>
+          <div class="form-row" style="margin-top:10px;">
+            <div class="field"><label>Date</label><input type="date" id="hol-date"></div>
+            <div class="field"><label>Name</label><input type="text" id="hol-name" placeholder="e.g. Founders' Day"></div>
+          </div>
+          <button class="btn-secondary" id="hol-submit">Add holiday</button>
+        </div>
+      ` : ``}
+      <div class="card" style="padding:0;">
+        <table>
+          <tr><th>Date</th><th>Holiday</th><th></th><th></th></tr>
+          ${items.map(h => {
+            const isPast = new Date(h.date + "T00:00:00") < today;
+            return `
+            <tr style="${isPast ? "opacity:0.5;" : ""}">
+              <td>${fmtDate(h.date)}</td>
+              <td>${h.name}</td>
+              <td>${isPast ? `<span class="tag" style="background:var(--line); color:var(--ink-soft);">Past</span>` : `<span class="tag approved">Upcoming</span>`}</td>
+              <td>${isHr ? `<button class="btn-secondary" data-del-hol="${h.date}|${h.name}" style="padding:6px 10px; font-size:12.5px; background:var(--red-bg); color:var(--red);">Remove</button>` : ``}</td>
+            </tr>
+          `;}).join("")}
+        </table>
+      </div>
+    `;
+
+    if(isHr){
+      document.getElementById("hol-submit").addEventListener("click", async ()=>{
+        const date = document.getElementById("hol-date").value;
+        const name = document.getElementById("hol-name").value.trim();
+        if(!date || !name){
+          showToast("Add both a date and a name.");
+          return;
+        }
+        state.holidays.push({ date, name });
+        await saveCollection("holidays", state.holidays);
+        showToast("Holiday added.");
+        renderHolidays(main);
+      });
+      main.querySelectorAll("[data-del-hol]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const [date, name] = btn.dataset.delHol.split("|");
+          state.holidays = state.holidays.filter(h => !(h.date === date && h.name === name));
+          await saveCollection("holidays", state.holidays);
+          showToast("Holiday removed.");
+          renderHolidays(main);
+        });
+      });
+    }
+  }
+
+  function renderEmpDirectory(main, editingId){
+    main.innerHTML = `
+      <h2 class="page-title">Employee directory</h2>
+      <p class="page-sub">Every employee currently on record. Use Edit to update someone's name, title, department, email, or phone.</p>
+      <div class="field" style="max-width:320px;">
+        <input type="text" id="emp-search" placeholder="Search by name or department">
+      </div>
+      <div class="card" style="padding:0; margin-top:14px;" id="emp-dir-table"></div>
+    `;
+
+    function editRowHtml(e){
+      return `
+        <tr>
+          <td colspan="6">
+            <div style="padding:14px 4px;">
+              <h3 style="font-size:14.5px; margin:0 0 10px 0;">Editing ${e.name}</h3>
+              <div class="form-row">
+                <div class="field"><label>Full name</label><input type="text" id="ed-dir-name-${e.id}" value="${e.name}"></div>
+                <div class="field"><label>Title</label><input type="text" id="ed-dir-title-${e.id}" value="${e.title}"></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>Department</label><input type="text" id="ed-dir-dept-${e.id}" value="${e.department}"></div>
+                <div class="field"><label>Email</label><input type="email" id="ed-dir-email-${e.id}" value="${e.email}"></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>Phone</label><input type="text" id="ed-dir-phone-${e.id}" value="${e.phone || ""}"></div>
+              </div>
+              <button class="btn-secondary" data-dir-save="${e.id}" style="margin-right:8px;">Save changes</button>
+              <button class="btn-secondary" data-dir-cancel="${e.id}" style="background:var(--line); color:var(--ink-soft);">Cancel</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    function rowHtml(e){
+      if(editingId === e.id) return editRowHtml(e);
+      return `
+        <tr>
+          <td>${e.name}</td>
+          <td>${e.title}</td>
+          <td>${e.department}</td>
+          <td>${e.email}</td>
+          <td>${e.role === "hr" ? "HR admin" : "Employee"}</td>
+          <td><button class="btn-secondary" data-dir-edit="${e.id}" style="padding:6px 10px; font-size:12.5px;">Edit</button></td>
+        </tr>
+      `;
+    }
+
+    function draw(filter){
+      const f = (filter || "").toLowerCase();
+      const rows = state.employees.filter(e =>
+        e.name.toLowerCase().includes(f) || e.department.toLowerCase().includes(f) || e.title.toLowerCase().includes(f)
+      ).sort((a,b)=> a.name.localeCompare(b.name));
+      const wrap = document.getElementById("emp-dir-table");
+      wrap.innerHTML = rows.length === 0 ? `<div class="empty-state" style="padding:22px 24px;">No employees match that search.</div>` : `
+        <table>
+          <tr><th>Name</th><th>Title</th><th>Department</th><th>Email</th><th>Account type</th><th></th></tr>
+          ${rows.map(rowHtml).join("")}
+        </table>
+      `;
+
+      wrap.querySelectorAll("[data-dir-edit]").forEach(btn=>{
+        btn.addEventListener("click", ()=> renderEmpDirectory(main, btn.dataset.dirEdit));
+      });
+      wrap.querySelectorAll("[data-dir-cancel]").forEach(btn=>{
+        btn.addEventListener("click", ()=> renderEmpDirectory(main));
+      });
+      wrap.querySelectorAll("[data-dir-save]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const id = btn.dataset.dirSave;
+          const emp = state.employees.find(x => x.id === id);
+          if(!emp) return;
+
+          const name = document.getElementById("ed-dir-name-" + id).value.trim();
+          const title = document.getElementById("ed-dir-title-" + id).value.trim();
+          const department = document.getElementById("ed-dir-dept-" + id).value.trim();
+          const email = document.getElementById("ed-dir-email-" + id).value.trim();
+          const phone = document.getElementById("ed-dir-phone-" + id).value.trim();
+
+          if(!name || !title || !department || !email){
+            showToast("Name, title, department, and email can't be left blank.");
+            return;
+          }
+
+          const updates = { name, title, department, email, phone };
+          try{
+            await apiSend("/employees/" + id, "PATCH", updates);
+          }catch(e){
+            showToast("Couldn't save — check the server/database connection.");
+            return;
+          }
+          Object.assign(emp, updates);
+          showToast(`Updated ${emp.name}'s directory details.`);
+          renderEmpDirectory(main);
+        });
+      });
+    }
+    draw("");
+    document.getElementById("emp-search").addEventListener("input", (e)=> draw(e.target.value));
+  }
+
+  function renderAdmin(main, filters){
+    filters = filters || { month: "all", year: "all" };
+    const allItems = [...state.leaveRequests].sort((a,b)=> new Date(b.submitted) - new Date(a.submitted));
+
+    const items = allItems.filter(r => {
+      if(filters.month === "all" && filters.year === "all") return true;
+      const d = new Date(r.start);
+      if(isNaN(d)) return false;
+      if(filters.month !== "all" && d.getMonth() !== parseInt(filters.month, 10)) return false;
+      if(filters.year !== "all" && d.getFullYear() !== parseInt(filters.year, 10)) return false;
+      return true;
+    });
+
+    const pendingCount = items.filter(r => r.status === "pending").length;
+    const approvedCount = items.filter(r => r.status === "approved").length;
+    const deniedCount = items.filter(r => r.status === "denied").length;
+    const years = yearsFromDates(allItems.map(r => r.start));
+
+    main.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h2 class="page-title">All leave requests</h2>
+          <p class="page-sub">HR view — approve or deny requests from any employee.</p>
+        </div>
+        <button class="btn-secondary" id="lv-download" style="flex-shrink:0;">⬇ Download CSV</button>
+      </div>
+
+      <div class="card" style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="field" style="margin:0;">
+          <label>Month</label>
+          <select id="lv-filter-month">
+            <option value="all" ${filters.month === "all" ? "selected" : ""}>All months</option>
+            ${MONTH_NAMES.map((m, i) => `<option value="${i}" ${filters.month == i ? "selected" : ""}>${m}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field" style="margin:0;">
+          <label>Year</label>
+          <select id="lv-filter-year">
+            <option value="all" ${filters.year === "all" ? "selected" : ""}>All years</option>
+            ${years.map(y => `<option value="${y}" ${filters.year == y ? "selected" : ""}>${y}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+
+      <div class="profile-grid" style="margin-bottom:16px;">
+        <div class="card" style="margin-bottom:0;"><div class="meta">Pending</div><h3 style="font-size:22px; margin:0;">${pendingCount}</h3></div>
+        <div class="card" style="margin-bottom:0;"><div class="meta">Approved</div><h3 style="font-size:22px; margin:0;">${approvedCount}</h3></div>
+        <div class="card" style="margin-bottom:0;"><div class="meta">Denied</div><h3 style="font-size:22px; margin:0;">${deniedCount}</h3></div>
+      </div>
+
+      <div class="card" style="padding:0;">
+        ${items.length === 0 ? `<div class="empty-state" style="padding:22px 24px;">No leave requests match this filter.</div>` : `
+        <table>
+          <tr><th>Employee</th><th>Dates</th><th>Reason</th><th>Status</th><th></th></tr>
+          ${items.map(r => `
+            <tr>
+              <td>${r.employeeName}</td>
+              <td>${fmtDate(r.start)} – ${fmtDate(r.end)}</td>
+              <td>${r.reason}</td>
+              <td><span class="tag ${r.status}">${r.status[0].toUpperCase() + r.status.slice(1)}</span></td>
+              <td>
+                ${r.status === "pending" ? `
+                  <button class="btn-secondary" data-approve="${r.id}" style="padding:6px 10px; font-size:12.5px; margin-right:6px;">Approve</button>
+                  <button class="btn-secondary" data-deny="${r.id}" style="padding:6px 10px; font-size:12.5px; background:var(--red-bg); color:var(--red);">Deny</button>
+                ` : ``}
+              </td>
+            </tr>
+          `).join("")}
+        </table>`}
+      </div>
+    `;
+
+    const readFilters = () => ({
+      month: document.getElementById("lv-filter-month").value,
+      year: document.getElementById("lv-filter-year").value
+    });
+    ["lv-filter-month", "lv-filter-year"].forEach(id => {
+      document.getElementById(id).addEventListener("change", ()=> renderAdmin(main, readFilters()));
+    });
+
+    document.getElementById("lv-download").addEventListener("click", ()=>{
+      downloadCSV(`leave_requests_${todayStamp()}.csv`, [
+        { label:"Employee", key:"employeeName" },
+        { label:"Employee ID", key:"employeeId" },
+        { label:"Start date", key:"start" },
+        { label:"End date", key:"end" },
+        { label:"Reason", key:"reason" },
+        { label:"Status", key:"status" },
+        { label:"Submitted", key:"submitted" }
+      ], items);
+    });
+
+    main.querySelectorAll("[data-approve]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        await updateRequestStatus(btn.dataset.approve, "approved");
+        renderAdmin(main, filters);
+      });
+    });
+    main.querySelectorAll("[data-deny]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        await updateRequestStatus(btn.dataset.deny, "denied");
+        renderAdmin(main, filters);
+      });
+    });
+  }
+
+
+  function renderAccounts(main, editingId){
+    const rows = [...state.employees].sort((a,b)=> a.name.localeCompare(b.name));
+    main.innerHTML = `
+      <h2 class="page-title">Manage accounts</h2>
+      <p class="page-sub">Create a login for a new employee or HR team member.</p>
+
+      <div class="card">
+        <h3>New account</h3>
+        <div class="form-row" style="margin-top:12px;">
+          <div class="field"><label>Full name</label><input type="text" id="ac-name" placeholder="e.g. Maria Alonso"></div>
+          <div class="field"><label>Employee ID</label><input type="text" id="ac-id" placeholder="e.g. EMP003"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Title</label><input type="text" id="ac-title" placeholder="e.g. Marketing Coordinator"></div>
+          <div class="field"><label>Department</label><input type="text" id="ac-dept" placeholder="e.g. Marketing"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Email</label><input type="email" id="ac-email" placeholder="name@gss-corp.com"></div>
+          <div class="field"><label>Phone</label><input type="text" id="ac-phone" placeholder="(555) 000-0000"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Account type</label>
+            <select id="ac-role">
+              <option value="employee">Employee</option>
+              <option value="hr">HR admin (full access)</option>
+            </select>
+          </div>
+          <div class="field"><label>Temporary password</label><input type="text" id="ac-pass" placeholder="Set an initial password"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Monthly salary</label><input type="number" id="ac-salary" placeholder="e.g. 60000"></div>
+          <div class="field"><label>Attendance device ID <span style="font-weight:400; color:var(--ink-soft);">(optional)</span></label><input type="text" id="ac-device-id" placeholder="ID/PIN set on the ZKTeco device"></div>
+        </div>
+        <button class="btn-secondary" id="ac-submit">Create account</button>
+      </div>
+
+      <div class="card">
+        <h3>Bulk import from Excel/CSV</h3>
+        <p class="page-sub" style="margin-top:2px;">
+          Already have employee data in a spreadsheet? Upload it here to create many accounts at once,
+          instead of adding them one by one above.
+        </p>
+        <p style="margin:10px 0;">
+          <button class="btn-secondary" id="ac-template-download">⬇ Download template</button>
+          <span style="color:var(--ink-soft); font-size:13px; margin-left:8px;">Fill this in, then upload it below.</span>
+        </p>
+        <input type="file" id="ac-bulk-file" accept=".csv,.xlsx,.xls" style="margin-bottom:12px;">
+        <div id="ac-bulk-preview"></div>
+        <div id="ac-bulk-result"></div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; margin:26px 0 10px 0; flex-wrap:wrap; gap:10px;">
+        <h3 style="margin:0;">Existing accounts</h3>
+        <button class="btn-secondary" id="ac-download">⬇ Download CSV</button>
+      </div>
+      <div class="card" style="padding:0;">
+        <table>
+          <tr><th>Name</th><th>ID</th><th>Department</th><th>Leave balance</th><th>Salary & allowances</th><th></th></tr>
+          ${rows.map(e => renderAccountRow(e, editingId)).join("")}
+        </table>
+      </div>
+    `;
+
+    // --- Bulk import: template download ---
+    document.getElementById("ac-template-download").addEventListener("click", ()=>{
+      const templateColumns = [
+        { label:"id", key:"id" },
+        { label:"name", key:"name" },
+        { label:"title", key:"title" },
+        { label:"department", key:"department" },
+        { label:"email", key:"email" },
+        { label:"phone", key:"phone" },
+        { label:"role", key:"role" },
+        { label:"monthlySalary", key:"monthlySalary" },
+        { label:"leaveBalance", key:"leaveBalance" },
+        { label:"deviceUserId", key:"deviceUserId" },
+        { label:"password", key:"password" }
+      ];
+      const sampleRow = {
+        id: "EMP101", name: "Sample Employee", title: "Job Title", department: "Department Name",
+        email: "sample@gss-corp.com", phone: "(555) 000-0000", role: "employee",
+        monthlySalary: 60000, leaveBalance: 12, deviceUserId: "", password: ""
+      };
+      downloadExcel("employee_import_template.xlsx", "Employees", templateColumns, [sampleRow]);
+    });
+
+    // --- Bulk import: parse uploaded file ---
+    let parsedBulkRows = [];
+    document.getElementById("ac-bulk-file").addEventListener("change", (e)=>{
+      const file = e.target.files[0];
+      const previewEl = document.getElementById("ac-bulk-preview");
+      const resultEl = document.getElementById("ac-bulk-result");
+      resultEl.innerHTML = "";
+      if(!file) return;
+
+      if(typeof XLSX === "undefined"){
+        previewEl.innerHTML = `<p style="color:var(--red);">Excel library didn't load — check your internet connection and try again.</p>`;
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (evt)=>{
+        try{
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          parsedBulkRows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+          if(parsedBulkRows.length === 0){
+            previewEl.innerHTML = `<p style="color:var(--red);">No rows found in this file.</p>`;
+            return;
+          }
+
+          const previewRows = parsedBulkRows.slice(0, 5);
+          previewEl.innerHTML = `
+            <p style="margin:10px 0 6px 0; font-size:13.5px;">Found <b>${parsedBulkRows.length}</b> row(s). Showing first ${previewRows.length}:</p>
+            <div style="overflow-x:auto;">
+              <table>
+                <tr><th>ID</th><th>Name</th><th>Title</th><th>Department</th><th>Email</th></tr>
+                ${previewRows.map(r => `<tr><td>${r.id || ""}</td><td>${r.name || ""}</td><td>${r.title || ""}</td><td>${r.department || ""}</td><td>${r.email || ""}</td></tr>`).join("")}
+              </table>
+            </div>
+            <button class="btn-secondary" id="ac-bulk-submit" style="margin-top:12px;">Import ${parsedBulkRows.length} employee(s)</button>
+          `;
+
+          document.getElementById("ac-bulk-submit").addEventListener("click", async ()=>{
+            const submitBtn = document.getElementById("ac-bulk-submit");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Importing…";
+            let result;
+            try{
+              result = await apiSend("/employees/bulk", "POST", { employees: parsedBulkRows });
+            }catch(err){
+              resultEl.innerHTML = `<p style="color:var(--red); margin-top:12px;">Import failed: ${err.message}</p>`;
+              submitBtn.disabled = false;
+              submitBtn.textContent = `Import ${parsedBulkRows.length} employee(s)`;
+              return;
+            }
+
+            resultEl.innerHTML = `
+              <div class="card" style="margin-top:12px;">
+                <p><b style="color:var(--brand);">${result.createdCount} account(s) created.</b> ${result.skippedCount > 0 ? `${result.skippedCount} row(s) skipped.` : ""}</p>
+                ${result.created.length > 0 ? `
+                  <p style="font-size:13px; color:var(--ink-soft); margin-top:10px;">
+                    Temporary passwords were generated for rows that didn't include one — share these with the new employees so they can log in.
+                  </p>
+                  <button class="btn-secondary" id="ac-bulk-download-creds" style="margin-top:6px;">⬇ Download credentials list</button>
+                ` : ""}
+                ${result.skipped.length > 0 ? `
+                  <p style="margin-top:14px; font-weight:500;">Skipped rows:</p>
+                  <table>
+                    <tr><th>Row</th><th>ID</th><th>Reason</th></tr>
+                    ${result.skipped.map(s => `<tr><td>${s.row}</td><td>${s.id}</td><td>${s.reason}</td></tr>`).join("")}
+                  </table>
+                ` : ""}
+              </div>
+            `;
+
+            if(result.created.length > 0){
+              document.getElementById("ac-bulk-download-creds").addEventListener("click", ()=>{
+                downloadExcel(`new_account_credentials_${todayStamp()}.xlsx`, "Credentials", [
+                  { label:"Employee ID", key:"id" },
+                  { label:"Name", key:"name" },
+                  { label:"Email", key:"email" },
+                  { label:"Temporary password", key:"tempPassword" }
+                ], result.created);
+              });
+            }
+
+            if(result.createdCount > 0){
+              try{
+                const fresh = await apiGet("/bootstrap");
+                state.employees = fresh.employees || state.employees;
+              }catch(e){ /* keep existing state if this fails; table will refresh on next reload */ }
+            }
+            document.getElementById("ac-bulk-file").value = "";
+            previewEl.innerHTML = "";
+            renderAccounts(main);
+          });
+        }catch(err){
+          previewEl.innerHTML = `<p style="color:var(--red);">Couldn't read this file: ${err.message}</p>`;
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    document.getElementById("ac-download").addEventListener("click", ()=>{
+      downloadCSV(`employees_${todayStamp()}.csv`, [
+        { label:"Employee ID", key:"id" },
+        { label:"Name", key:"name" },
+        { label:"Role", key:"role" },
+        { label:"Title", key:"title" },
+        { label:"Department", key:"department" },
+        { label:"Email", key:"email" },
+        { label:"Phone", key:"phone" },
+        { label:"Start date", key:"startDate" },
+        { label:"Leave balance", key:"leaveBalance" },
+        { label:"Monthly salary", key:"monthlySalary" },
+        { label:"Travel allowance", key:"travelAllowance" },
+        { label:"Lunch allowance", key:"lunchAllowance" },
+        { label:"Mobile allowance", key:"mobileAllowance" }
+      ], rows);
+    });
+
+    document.getElementById("ac-submit").addEventListener("click", async ()=>{
+      const name = document.getElementById("ac-name").value.trim();
+      const id = document.getElementById("ac-id").value.trim().toUpperCase();
+      const title = document.getElementById("ac-title").value.trim();
+      const department = document.getElementById("ac-dept").value.trim();
+      const email = document.getElementById("ac-email").value.trim();
+      const phone = document.getElementById("ac-phone").value.trim();
+      const role = document.getElementById("ac-role").value;
+      const password = document.getElementById("ac-pass").value;
+      const monthlySalary = parseInt(document.getElementById("ac-salary").value, 10) || 60000;
+      const deviceUserId = document.getElementById("ac-device-id").value.trim();
+
+      if(!name || !id || !title || !department || !email || !password){
+        showToast("Fill in every field before creating the account.");
+        return;
+      }
+      if(state.employees.some(e => e.id.toUpperCase() === id)){
+        showToast("That employee ID is already in use.");
+        return;
+      }
+      let newAccount;
+      try{
+        newAccount = await apiSend("/employees", "POST", {
+          id, password, name, role, title, department, email, phone, monthlySalary, deviceUserId
+        });
+      }catch(e){
+        showToast("Couldn't create account — check the server/database connection.");
+        return;
+      }
+      state.employees.push(newAccount);
+      showToast(`Account created for ${name}.`);
+      renderAccounts(main);
+    });
+
+    main.querySelectorAll("[data-reset-password]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.dataset.resetPassword;
+        const target = state.employees.find(e => e.id === id);
+        requireCurrentPassword(
+          "Reset password",
+          `Set a new password for ${target ? target.name : id} (${id}).`,
+          async (myPassword, newPassword) => {
+            try{
+              await apiSend("/employees/" + id + "/reset-password", "POST", {
+                confirmerId: state.currentUser.id,
+                confirmerPassword: myPassword,
+                newPassword
+              });
+            }catch(err){
+              if(err.status === 401) return false;
+              showToast("Couldn't reset password — check the server/database connection.");
+              return true;
+            }
+            showToast(`Password reset for ${target ? target.name : id}.`);
+            return true;
+          },
+          {
+            extraField: { label: "New password for this employee", placeholder: "At least 6 characters", minLength: 6 },
+            confirmLabel: "Reset password"
+          }
+        );
+      });
+    });
+
+    main.querySelectorAll("[data-remove]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.dataset.remove;
+        const target = state.employees.find(e => e.id === id);
+        requireCurrentPassword(
+          "Remove account",
+          `Enter your password to confirm removing ${target ? target.name : id} (${id}). This can't be undone.`,
+          async (password) => {
+            try{
+              await apiSend("/employees/" + id, "DELETE", { confirmerId: state.currentUser.id, password });
+            }catch(err){
+              if(err.status === 401) return false;
+              showToast("Couldn't remove account — check the server/database connection.");
+              return true;
+            }
+            state.employees = state.employees.filter(e => e.id !== id);
+            showToast("Account removed.");
+            renderAccounts(main);
+            return true;
+          },
+          { destructive: true, confirmLabel: "Remove account" }
+        );
+      });
+    });
+
+    main.querySelectorAll("[data-edit]").forEach(btn=>{
+      btn.addEventListener("click", ()=> renderAccounts(main, btn.dataset.edit));
+    });
+    main.querySelectorAll("[data-cancel-edit]").forEach(btn=>{
+      btn.addEventListener("click", ()=> renderAccounts(main));
+    });
+    main.querySelectorAll("[data-save-edit]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const id = btn.dataset.saveEdit;
+        const emp = state.employees.find(e => e.id === id);
+        if(!emp) return;
+        const updates = {
+          leaveBalance: parseInt(document.getElementById("ed-leave-" + id).value, 10) || 0,
+          monthlySalary: parseInt(document.getElementById("ed-salary-" + id).value, 10) || 0,
+          travelAllowance: parseInt(document.getElementById("ed-travel-" + id).value, 10) || 0,
+          lunchAllowance: parseInt(document.getElementById("ed-lunch-" + id).value, 10) || 0,
+          mobileAllowance: parseInt(document.getElementById("ed-mobile-" + id).value, 10) || 0,
+          deviceUserId: document.getElementById("ed-device-" + id).value.trim()
+        };
+        try{
+          await apiSend("/employees/" + id, "PATCH", updates);
+        }catch(e){
+          showToast("Couldn't save — check the server/database connection.");
+          return;
+        }
+        Object.assign(emp, updates);
+        showToast(`Updated ${emp.name}'s pay and leave details.`);
+        renderAccounts(main);
+      });
+    });
+  }
+
+  function renderAttendance(main, filters){
+    filters = filters || { month: "all", year: "all" };
+    const allRecords = [...state.attendance].sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
+
+    const records = allRecords.filter(r => {
+      if(filters.month === "all" && filters.year === "all") return true;
+      const d = new Date(r.timestamp);
+      if(isNaN(d)) return false;
+      if(filters.month !== "all" && d.getMonth() !== parseInt(filters.month, 10)) return false;
+      if(filters.year !== "all" && d.getFullYear() !== parseInt(filters.year, 10)) return false;
+      return true;
+    });
+
+    const years = yearsFromDates(allRecords.map(r => r.timestamp));
+    const unmatchedCount = records.filter(r => !r.employeeId).length;
+
+    main.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h2 class="page-title">Attendance</h2>
+          <p class="page-sub">Synced from the ZKTeco device on the office network.</p>
+        </div>
+        <button class="btn-secondary" id="att-sync" style="flex-shrink:0;">⟳ Sync now</button>
+      </div>
+
+      <div id="att-sync-status" style="display:none; margin-bottom:16px;"></div>
+
+      <div class="card" style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="field" style="margin:0;">
+          <label>Month</label>
+          <select id="att-filter-month">
+            <option value="all" ${filters.month === "all" ? "selected" : ""}>All months</option>
+            ${MONTH_NAMES.map((m, i) => `<option value="${i}" ${filters.month == i ? "selected" : ""}>${m}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field" style="margin:0;">
+          <label>Year</label>
+          <select id="att-filter-year">
+            <option value="all" ${filters.year === "all" ? "selected" : ""}>All years</option>
+            ${years.map(y => `<option value="${y}" ${filters.year == y ? "selected" : ""}>${y}</option>`).join("")}
+          </select>
+        </div>
+        <div style="margin-left:auto; display:flex; gap:10px;">
+          <button class="btn-secondary" id="att-download-csv">⬇ CSV</button>
+          <button class="btn-secondary" id="att-download-xlsx">⬇ Excel</button>
+        </div>
+      </div>
+
+      ${unmatchedCount > 0 ? `
+        <div class="card" style="background:var(--red-bg); color:var(--red);">
+          ${unmatchedCount} record${unmatchedCount === 1 ? "" : "s"} in this view came from a device ID that isn't mapped to any employee yet.
+          Set each employee's "Attendance device ID" on the Manage accounts page to fix this.
+        </div>
+      ` : ""}
+
+      <div class="card" style="padding:0;">
+        ${records.length === 0 ? `<div class="empty-state" style="padding:22px 24px;">No attendance records yet — click "Sync now" once the device is reachable.</div>` : `
+        <table>
+          <tr><th>Employee</th><th>Device ID</th><th>Date</th><th>Time</th></tr>
+          ${records.map(r => `
+            <tr>
+              <td>${r.employeeName}</td>
+              <td>${r.deviceUserId}</td>
+              <td>${fmtDate(r.timestamp.slice(0,10))}</td>
+              <td>${new Date(r.timestamp).toLocaleTimeString(undefined, { hour:"2-digit", minute:"2-digit" })}</td>
+            </tr>
+          `).join("")}
+        </table>`}
+      </div>
+    `;
+
+    const readFilters = () => ({
+      month: document.getElementById("att-filter-month").value,
+      year: document.getElementById("att-filter-year").value
+    });
+    ["att-filter-month", "att-filter-year"].forEach(id => {
+      document.getElementById(id).addEventListener("change", ()=> renderAttendance(main, readFilters()));
+    });
+
+    const columns = [
+      { label:"Employee", key:"employeeName" },
+      { label:"Employee ID", key:"employeeId" },
+      { label:"Device ID", key:"deviceUserId" },
+      { label:"Timestamp", key:"timestamp" }
+    ];
+
+    document.getElementById("att-download-csv").addEventListener("click", ()=>{
+      downloadCSV(`attendance_${todayStamp()}.csv`, columns, records);
+    });
+    document.getElementById("att-download-xlsx").addEventListener("click", ()=>{
+      downloadExcel(`attendance_${todayStamp()}.xlsx`, "Attendance", columns, records);
+    });
+
+    document.getElementById("att-sync").addEventListener("click", async ()=>{
+      const statusBox = document.getElementById("att-sync-status");
+      statusBox.style.display = "block";
+      statusBox.className = "card";
+      statusBox.textContent = "Connecting to the attendance device…";
+      try{
+        const result = await apiSend("/attendance/sync", "POST");
+        statusBox.style.background = "";
+        statusBox.textContent = `Synced: ${result.newRecordsAdded} new record(s) added (${result.logsFromDevice} total logs read from device, ${result.deviceUsers} users on device).`;
+        const bootstrap = await apiGet("/bootstrap");
+        state.attendance = bootstrap.attendance || [];
+        setTimeout(()=> renderAttendance(main, filters), 1200);
+      }catch(err){
+        statusBox.style.background = "var(--red-bg)";
+        statusBox.style.color = "var(--red)";
+        statusBox.textContent = `Couldn't sync: ${err.message}. Check ZK_IP/ZK_PORT in .env and that the device is on the same network as the server.`;
+      }
+    });
+  }
+
+  // ---------- HR Documents (Certificates & Letters) — auto-generated A4 PDF ----------
+  // Letterhead details — edit these if the company's registered name/address/contact changes.
+  // LOGO_DATA_URI is the company logo, embedded as base64 so the app and the
+  // generated PDFs never depend on loading an external image file.
+  const LOGO_DATA_URI = "data:image/png;base64,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";
+  const LOGO_ASPECT = 203 / 71; // width / height of the source logo file
+  const COMPANY = {
+    name: "Global Sustainable Sourcing",
+    addressLine: "Gulshan Avenue, Dhaka 1212, Bangladesh",
+    contactLine: "hr@gss-corp.com  ·  www.gss-corp.com"
+  };
+
+  const DOC_TYPES = {
+    experience:   { label: "Experience Certificate" },
+    salary:       { label: "Salary Certificate" },
+    noc:          { label: "No Objection Certificate (NOC)" },
+    offer:        { label: "Offer Letter" },
+    appointment:  { label: "Appointment Letter" },
+    promotion:    { label: "Promotion Letter" },
+    relieving:    { label: "Relieving Letter" }
+  };
+
+  function certFileSafe(name){
+    return String(name || "employee").trim().replace(/[^a-z0-9]+/gi, "_");
+  }
+
+  function docRefNumber(prefix, emp){
+    return `${prefix}-${emp.id}-${Date.now().toString().slice(-6)}`;
+  }
+
+  function aOrAn(word){
+    return /^[aeiou]/i.test(word || "") ? "an" : "a";
+  }
+
+  function firstName(name){
+    return String(name || "").trim().split(/\s+/)[0] || name;
+  }
+
+  // Draws the shared letterhead/border/title block. Returns layout numbers
+  // the caller needs to place the body text and signature block.
+  function drawCertificateShell(doc, title, refNo){
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 14;
+
+    // Outer + inner accent border, echoing the portal's brand colors.
+    doc.setDrawColor(43, 74, 71);
+    doc.setLineWidth(1.1);
+    doc.rect(margin, margin, pageW - margin * 2, pageH - margin * 2);
+    doc.setDrawColor(180, 134, 59);
+    doc.setLineWidth(0.4);
+    doc.rect(margin + 3, margin + 3, pageW - (margin + 3) * 2, pageH - (margin + 3) * 2);
+
+    // Company logo, top-left of the letterhead area.
+    const logoW = 26;
+    const logoH = logoW / LOGO_ASPECT;
+    try{
+      doc.addImage(LOGO_DATA_URI, "PNG", margin + 6, margin + 6, logoW, logoH);
+    }catch(e){
+      // If the logo ever fails to embed (e.g. corrupted data), the rest of
+      // the letterhead should still render fine without it.
+      console.warn("Letterhead logo failed to render:", e);
+    }
+
+    doc.setFont("times", "bold");
+    doc.setFontSize(19);
+    doc.setTextColor(30, 42, 40);
+    doc.text(COMPANY.name.toUpperCase(), pageW / 2, margin + 15, { align: "center" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.setTextColor(75, 90, 87);
+    doc.text(COMPANY.addressLine, pageW / 2, margin + 21, { align: "center" });
+    doc.text(COMPANY.contactLine, pageW / 2, margin + 26, { align: "center" });
+
+    doc.setDrawColor(180, 134, 59);
+    doc.setLineWidth(0.6);
+    doc.line(margin + 10, margin + 31, pageW - margin - 10, margin + 31);
+
+    doc.setFont("times", "bold");
+    doc.setFontSize(15.5);
+    doc.setTextColor(28, 50, 48);
+    doc.text(title.toUpperCase(), pageW / 2, margin + 42, { align: "center" });
+    const tw = doc.getTextWidth(title.toUpperCase());
+    doc.setDrawColor(43, 74, 71);
+    doc.setLineWidth(0.4);
+    doc.line(pageW / 2 - tw / 2, margin + 45, pageW / 2 + tw / 2, margin + 45);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(75, 90, 87);
+    doc.text(`Ref No: ${refNo}`, pageW - margin - 6, margin + 10, { align: "right" });
+    doc.text(`Date: ${fmtDate(todayStamp())}`, pageW - margin - 6, margin + 14.5, { align: "right" });
+
+    return { pageW, pageH, margin, contentTop: margin + 55 };
+  }
+
+  function drawCertificateFooter(doc, pageW, pageH, margin, note){
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(120, 130, 127);
+    doc.text(
+      note || "This is a system-generated document issued through the HR Portal and is valid without a physical signature.",
+      pageW / 2, pageH - margin - 6, { align: "center" }
+    );
+  }
+
+  function drawSignatureBlock(doc, x, y, signatoryLabel){
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 42, 40);
+    doc.text("For " + COMPANY.name, x, y);
+    y += 20;
+    doc.setDrawColor(75, 90, 87);
+    doc.setLineWidth(0.3);
+    doc.line(x, y, x + 62, y);
+    y += 5;
+    doc.setFontSize(10.5);
+    doc.text(signatoryLabel || "Authorized Signatory", x, y);
+    doc.setFontSize(9.5);
+    doc.setTextColor(75, 90, 87);
+    doc.text("Human Resources Department", x, y + 5);
+  }
+
+  // Writes an array of paragraphs starting at contentTop, returns the y
+  // position just after the last paragraph.
+  function writeParagraphs(doc, paragraphs, innerX, paraWidth, startY){
+    let y = startY;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 42, 40);
+    paragraphs.forEach(p => {
+      const lines = doc.splitTextToSize(p, paraWidth);
+      doc.text(lines, innerX, y);
+      y += lines.length * 6 + 6;
+    });
+    return y;
+  }
+
+  function buildExperienceCertificate(emp, opts){
+    opts = opts || {};
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const refNo = docRefNumber("EXP", emp);
+    const { pageW, pageH, margin, contentTop } = drawCertificateShell(doc, "Experience Certificate", refNo);
+    const innerX = margin + 8;
+    const paraWidth = pageW - innerX * 2;
+    const salutation = (opts.purpose && opts.purpose.trim()) ? opts.purpose.trim() : "Whom It May Concern";
+
+    let y = contentTop;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 42, 40);
+    doc.text(`To ${salutation},`, innerX, y);
+    y += 10;
+
+    const startDate = emp.startDate ? fmtDate(emp.startDate) : "the date on file";
+    y = writeParagraphs(doc, [
+      `This is to certify that ${emp.name} (Employee ID: ${emp.id}) has been associated with ${COMPANY.name} `+
+      `as ${aOrAn(emp.title)} ${emp.title} in the ${emp.department} department since ${startDate}, and continues `+
+      `to be employed with the organization as of the date of this certificate.`,
+      `During this period, the above-named employee's conduct, discipline, and professional performance have `+
+      `been found to be satisfactory. This certificate is issued at the employee's request${opts.purpose && opts.purpose.trim() ? `, for ${opts.purpose.trim()}` : ""}.`,
+      `We wish them continued success in their future endeavors.`
+    ], innerX, paraWidth, y);
+
+    drawSignatureBlock(doc, innerX, Math.max(y + 10, contentTop + 118));
+    drawCertificateFooter(doc, pageW, pageH, margin);
+    return { doc, filename: `Experience_Certificate_${certFileSafe(emp.name)}.pdf`, title: "Experience Certificate" };
+  }
+
+  function buildSalaryCertificate(emp, opts){
+    opts = opts || {};
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const refNo = docRefNumber("SAL", emp);
+    const { pageW, pageH, margin, contentTop } = drawCertificateShell(doc, "Salary Certificate", refNo);
+    const innerX = margin + 8;
+    const paraWidth = pageW - innerX * 2;
+    const salutation = (opts.purpose && opts.purpose.trim()) ? opts.purpose.trim() : "Whom It May Concern";
+
+    const salary = emp.monthlySalary || 0;
+    const travel = emp.travelAllowance || 0;
+    const lunch = emp.lunchAllowance || 0;
+    const mobile = emp.mobileAllowance || 0;
+    const gross = salary + travel + lunch + mobile;
+    const fmtBdt = (n) => "BDT " + Math.round(n).toLocaleString("en-US");
+
+    let y = contentTop;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 42, 40);
+    doc.text(`To ${salutation},`, innerX, y);
+    y += 10;
+
+    const startDate = emp.startDate ? fmtDate(emp.startDate) : "the date on file";
+    const intro = `This is to certify that ${emp.name} (Employee ID: ${emp.id}) is currently employed with ${COMPANY.name} `+
+      `as ${aOrAn(emp.title)} ${emp.title} in the ${emp.department} department, since ${startDate}. As per company `+
+      `records, the employee's current monthly salary structure is as follows:`;
+    const introLines = doc.splitTextToSize(intro, paraWidth);
+    doc.text(introLines, innerX, y);
+    y += introLines.length * 6 + 8;
+
+    if(typeof doc.autoTable === "function"){
+      doc.autoTable({
+        startY: y,
+        margin: { left: innerX, right: innerX },
+        head: [["Salary component", "Monthly amount"]],
+        body: [
+          ["Basic salary", fmtBdt(salary)],
+          ["Travel allowance", fmtBdt(travel)],
+          ["Lunch allowance", fmtBdt(lunch)],
+          ["Mobile allowance", fmtBdt(mobile)],
+          [{ content: "Gross monthly salary", styles: { fontStyle: "bold" } }, { content: fmtBdt(gross), styles: { fontStyle: "bold" } }]
+        ],
+        theme: "grid",
+        headStyles: { fillColor: [43, 74, 71], textColor: 255, fontSize: 10 },
+        bodyStyles: { fontSize: 10, textColor: [30, 42, 40] },
+        styles: { cellPadding: 3, lineColor: [215, 222, 217] }
+      });
+      y = doc.lastAutoTable.finalY + 12;
+    } else {
+      const rowLabels = [
+        ["Basic salary", fmtBdt(salary)], ["Travel allowance", fmtBdt(travel)],
+        ["Lunch allowance", fmtBdt(lunch)], ["Mobile allowance", fmtBdt(mobile)],
+        ["Gross monthly salary", fmtBdt(gross)]
+      ];
+      doc.setFontSize(10.5);
+      rowLabels.forEach(([label, val]) => {
+        doc.text(label, innerX, y);
+        doc.text(val, pageW - innerX, y, { align: "right" });
+        y += 7;
+      });
+      y += 6;
+    }
+
+    const closing = `This certificate is issued at the request of the employee${opts.purpose && opts.purpose.trim() ? `, for ${opts.purpose.trim()}` : ""}, `+
+      `and reflects the salary structure on record as of the date of this certificate.`;
+    y = writeParagraphs(doc, [closing], innerX, paraWidth, y);
+
+    drawSignatureBlock(doc, innerX, Math.max(y + 8, contentTop + 148));
+    drawCertificateFooter(doc, pageW, pageH, margin);
+    return { doc, filename: `Salary_Certificate_${certFileSafe(emp.name)}.pdf`, title: "Salary Certificate" };
+  }
+
+  function buildNOC(emp, opts){
+    opts = opts || {};
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const refNo = docRefNumber("NOC", emp);
+    const { pageW, pageH, margin, contentTop } = drawCertificateShell(doc, "No Objection Certificate", refNo);
+    const innerX = margin + 8;
+    const paraWidth = pageW - innerX * 2;
+
+    let y = contentTop;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 42, 40);
+    doc.text("To Whom It May Concern,", innerX, y);
+    y += 10;
+
+    const startDate = emp.startDate ? fmtDate(emp.startDate) : "the date on file";
+    const purposeText = opts.purpose && opts.purpose.trim() ? opts.purpose.trim() : "the purpose stated by the employee";
+    const paragraphs = [
+      `This is to certify that we have no objection to ${emp.name} (Employee ID: ${emp.id}), currently working with `+
+      `${COMPANY.name} as ${aOrAn(emp.title)} ${emp.title} in the ${emp.department} department since ${startDate}, `+
+      `proceeding with ${purposeText}.`,
+      `This No Objection Certificate is issued upon the employee's request${opts.validUntil ? `, and is valid until ${fmtDate(opts.validUntil)}` : ""}.`
+    ];
+    y = writeParagraphs(doc, paragraphs, innerX, paraWidth, y);
+
+    drawSignatureBlock(doc, innerX, Math.max(y + 10, contentTop + 110));
+    drawCertificateFooter(doc, pageW, pageH, margin);
+    return { doc, filename: `NOC_${certFileSafe(emp.name)}.pdf`, title: "No Objection Certificate" };
+  }
+
+  function buildOfferLetter(emp, opts){
+    opts = opts || {};
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const refNo = docRefNumber("OFR", emp);
+    const { pageW, pageH, margin, contentTop } = drawCertificateShell(doc, "Offer Letter", refNo);
+    const innerX = margin + 8;
+    const paraWidth = pageW - innerX * 2;
+    const fmtBdt = (n) => "BDT " + Math.round(n || 0).toLocaleString("en-US");
+
+    let y = contentTop;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 42, 40);
+    doc.text(`Dear ${firstName(emp.name)},`, innerX, y);
+    y += 10;
+
+    const paragraphs = [
+      `We are pleased to offer you the position of ${opts.title || emp.title} in the ${opts.department || emp.department} `+
+      `department at ${COMPANY.name}. Your date of joining will be ${opts.joinDate ? fmtDate(opts.joinDate) : "a date to be mutually agreed"}.`,
+      `Your monthly gross compensation will be ${fmtBdt(opts.salary)}, subject to statutory deductions and the `+
+      `company's standard allowance and benefits structure.${opts.manager ? ` You will report to ${opts.manager}.` : ""}`,
+      `This offer is contingent upon satisfactory completion of any pending documentation or background verification. `+
+      `Please confirm your acceptance by signing and returning a copy of this letter.`,
+      `We look forward to welcoming you to the team.`
+    ];
+    y = writeParagraphs(doc, paragraphs, innerX, paraWidth, y);
+
+    drawSignatureBlock(doc, innerX, Math.max(y + 10, contentTop + 130));
+    drawCertificateFooter(doc, pageW, pageH, margin);
+    return { doc, filename: `Offer_Letter_${certFileSafe(emp.name)}.pdf`, title: "Offer Letter" };
+  }
+
+  function buildAppointmentLetter(emp, opts){
+    opts = opts || {};
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const refNo = docRefNumber("APT", emp);
+    const { pageW, pageH, margin, contentTop } = drawCertificateShell(doc, "Appointment Letter", refNo);
+    const innerX = margin + 8;
+    const paraWidth = pageW - innerX * 2;
+
+    let y = contentTop;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 42, 40);
+    doc.text(`Dear ${firstName(emp.name)},`, innerX, y);
+    y += 10;
+
+    const paragraphs = [
+      `Further to your acceptance of our offer, we are pleased to confirm your appointment as ${opts.title || emp.title} `+
+      `in the ${opts.department || emp.department} department at ${COMPANY.name}, effective `+
+      `${opts.joinDate ? fmtDate(opts.joinDate) : "the date on file"}.`,
+      `You will be on probation for a period of ${opts.probation || "3 months"} from your date of joining, during `+
+      `which your performance and conduct will be reviewed. Upon satisfactory completion of probation, your `+
+      `employment will be confirmed in writing.${opts.manager ? ` You will report to ${opts.manager}.` : ""}`,
+      `Your compensation, benefits, and other terms of employment are as discussed and documented separately with HR.`,
+      `We welcome you to ${COMPANY.name} and look forward to a long and successful association.`
+    ];
+    y = writeParagraphs(doc, paragraphs, innerX, paraWidth, y);
+
+    drawSignatureBlock(doc, innerX, Math.max(y + 10, contentTop + 135));
+    drawCertificateFooter(doc, pageW, pageH, margin);
+    return { doc, filename: `Appointment_Letter_${certFileSafe(emp.name)}.pdf`, title: "Appointment Letter" };
+  }
+
+  function buildPromotionLetter(emp, opts){
+    opts = opts || {};
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const refNo = docRefNumber("PRM", emp);
+    const { pageW, pageH, margin, contentTop } = drawCertificateShell(doc, "Promotion Letter", refNo);
+    const innerX = margin + 8;
+    const paraWidth = pageW - innerX * 2;
+    const fmtBdt = (n) => "BDT " + Math.round(n || 0).toLocaleString("en-US");
+
+    let y = contentTop;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 42, 40);
+    doc.text(`Dear ${firstName(emp.name)},`, innerX, y);
+    y += 10;
+
+    const paragraphs = [
+      `We are pleased to inform you that, in recognition of your consistent performance and contribution to `+
+      `${COMPANY.name}, you have been promoted from the position of ${emp.title} to ${opts.newTitle} in the `+
+      `${opts.newDept || emp.department} department, effective ${opts.effectiveDate ? fmtDate(opts.effectiveDate) : fmtDate(todayStamp())}.`,
+      `Your revised monthly gross compensation will be ${fmtBdt(opts.newSalary)} from the effective date mentioned above, `+
+      `subject to the company's standard deductions and benefits structure.`,
+      `We congratulate you on this achievement and look forward to your continued contributions in this new role.`
+    ];
+    y = writeParagraphs(doc, paragraphs, innerX, paraWidth, y);
+
+    drawSignatureBlock(doc, innerX, Math.max(y + 10, contentTop + 118));
+    drawCertificateFooter(doc, pageW, pageH, margin);
+    return { doc, filename: `Promotion_Letter_${certFileSafe(emp.name)}.pdf`, title: "Promotion Letter" };
+  }
+
+  function buildRelievingLetter(emp, opts){
+    opts = opts || {};
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const refNo = docRefNumber("REL", emp);
+    const { pageW, pageH, margin, contentTop } = drawCertificateShell(doc, "Relieving Letter", refNo);
+    const innerX = margin + 8;
+    const paraWidth = pageW - innerX * 2;
+
+    let y = contentTop;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 42, 40);
+    doc.text(`Dear ${firstName(emp.name)},`, innerX, y);
+    y += 10;
+
+    const lastDay = opts.lastDay ? fmtDate(opts.lastDay) : fmtDate(todayStamp());
+    const paragraphs = [
+      `This is to certify that ${emp.name} (Employee ID: ${emp.id}), who was working with ${COMPANY.name} as `+
+      `${aOrAn(emp.title)} ${emp.title} in the ${emp.department} department, has been relieved from their duties `+
+      `with effect from ${lastDay}${opts.reason && opts.reason.trim() ? `, on account of ${opts.reason.trim()}` : ""}.`,
+      `During the tenure of employment, the above-named employee's conduct and performance were found to be `+
+      `satisfactory. All dues and company property, if any, have been settled and returned as per company policy.`,
+      `We wish them success in their future endeavors.`
+    ];
+    y = writeParagraphs(doc, paragraphs, innerX, paraWidth, y);
+
+    drawSignatureBlock(doc, innerX, Math.max(y + 10, contentTop + 118));
+    drawCertificateFooter(doc, pageW, pageH, margin);
+    return { doc, filename: `Relieving_Letter_${certFileSafe(emp.name)}.pdf`, title: "Relieving Letter" };
+  }
+
+  // Reads the current extra-field inputs from the Reports > Documents card
+  // and builds the requested document. Returns null (with a toast) if a
+  // required field is missing, or if jsPDF hasn't loaded.
+  function buildSelectedDocument(type, emp){
+    if(typeof window.jspdf === "undefined"){
+      showToast("PDF library didn't load — check your internet connection and try again.");
+      return null;
+    }
+    const val = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
+
+    switch(type){
+      case "experience":
+        return buildExperienceCertificate(emp, { purpose: val("rp-doc-purpose") });
+      case "salary":
+        return buildSalaryCertificate(emp, { purpose: val("rp-doc-purpose") });
+      case "noc": {
+        const purpose = val("rp-doc-purpose").trim();
+        if(!purpose){ showToast("Enter a purpose for the NOC (e.g. \"obtaining a visitor visa\")."); return null; }
+        return buildNOC(emp, { purpose, validUntil: val("rp-doc-validuntil") });
+      }
+      case "offer":
+        return buildOfferLetter(emp, {
+          title: val("rp-doc-title").trim() || emp.title,
+          department: val("rp-doc-dept").trim() || emp.department,
+          joinDate: val("rp-doc-joindate"),
+          salary: parseFloat(val("rp-doc-salary")) || 0,
+          manager: val("rp-doc-manager").trim()
+        });
+      case "appointment":
+        return buildAppointmentLetter(emp, {
+          title: val("rp-doc-title").trim() || emp.title,
+          department: val("rp-doc-dept").trim() || emp.department,
+          joinDate: val("rp-doc-joindate"),
+          probation: val("rp-doc-probation").trim() || "3 months",
+          manager: val("rp-doc-manager").trim()
+        });
+      case "promotion": {
+        const newTitle = val("rp-doc-newtitle").trim();
+        if(!newTitle){ showToast("Enter the employee's new job title for the promotion letter."); return null; }
+        return buildPromotionLetter(emp, {
+          newTitle,
+          newDept: val("rp-doc-dept").trim() || emp.department,
+          newSalary: parseFloat(val("rp-doc-salary")) || 0,
+          effectiveDate: val("rp-doc-effdate")
+        });
+      }
+      case "relieving":
+        return buildRelievingLetter(emp, {
+          lastDay: val("rp-doc-lastday"),
+          reason: val("rp-doc-reason").trim()
+        });
+      default:
+        return null;
+    }
+  }
+
+  function docExtraFieldsHtml(type, emp){
+    const today = todayStamp();
+    if(type === "noc"){
+      return `
+        <div class="form-row">
+          <div class="field"><label>Purpose</label><input type="text" id="rp-doc-purpose" placeholder="e.g. obtaining a visitor visa"></div>
+          <div class="field"><label>Valid until <span style="font-weight:400; color:var(--ink-soft);">(optional)</span></label><input type="date" id="rp-doc-validuntil"></div>
+        </div>`;
+    }
+    if(type === "salary" || type === "experience"){
+      return `
+        <div class="form-row">
+          <div class="field"><label>Purpose <span style="font-weight:400; color:var(--ink-soft);">(optional)</span></label><input type="text" id="rp-doc-purpose" placeholder="e.g. bank loan application"></div>
+        </div>`;
+    }
+    if(type === "offer" || type === "appointment"){
+      return `
+        <div class="form-row">
+          <div class="field"><label>Job title</label><input type="text" id="rp-doc-title" value="${emp.title}"></div>
+          <div class="field"><label>Department</label><input type="text" id="rp-doc-dept" value="${emp.department}"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Joining date</label><input type="date" id="rp-doc-joindate" value="${type === "appointment" ? (emp.startDate || today) : today}"></div>
+          ${type === "offer"
+            ? `<div class="field"><label>Monthly salary (BDT)</label><input type="number" id="rp-doc-salary" value="${emp.monthlySalary || 0}"></div>`
+            : `<div class="field"><label>Probation period</label><input type="text" id="rp-doc-probation" value="3 months"></div>`
+          }
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Reporting manager <span style="font-weight:400; color:var(--ink-soft);">(optional)</span></label><input type="text" id="rp-doc-manager" placeholder="e.g. Grace Kim, HR Manager"></div>
+        </div>`;
+    }
+    if(type === "promotion"){
+      return `
+        <div class="form-row">
+          <div class="field"><label>New title</label><input type="text" id="rp-doc-newtitle" placeholder="e.g. Senior Software Engineer"></div>
+          <div class="field"><label>New department</label><input type="text" id="rp-doc-dept" value="${emp.department}"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>New monthly salary (BDT)</label><input type="number" id="rp-doc-salary" value="${emp.monthlySalary || 0}"></div>
+          <div class="field"><label>Effective date</label><input type="date" id="rp-doc-effdate" value="${today}"></div>
+        </div>`;
+    }
+    if(type === "relieving"){
+      return `
+        <div class="form-row">
+          <div class="field"><label>Last working day</label><input type="date" id="rp-doc-lastday" value="${today}"></div>
+          <div class="field"><label>Reason <span style="font-weight:400; color:var(--ink-soft);">(optional)</span></label><input type="text" id="rp-doc-reason" placeholder="e.g. resignation, end of contract"></div>
+        </div>`;
+    }
+    return "";
+  }
+
+  function downloadSelectedDocument(type, emp){
+    const result = buildSelectedDocument(type, emp);
+    if(!result) return;
+    result.doc.save(result.filename);
+    showToast(`${result.title} downloaded.`);
+  }
+
+  // Opens the generated PDF in a new browser tab so HR can look it over
+  // before deciding to download or email it. Nothing is sent anywhere —
+  // this only renders the PDF that jsPDF already built in memory.
+  function previewSelectedDocument(type, emp){
+    const result = buildSelectedDocument(type, emp);
+    if(!result) return;
+    const blobUrl = result.doc.output("bloburl");
+    const win = window.open(blobUrl, "_blank");
+    if(!win){
+      showToast("Your browser blocked the preview popup — allow popups for this site and try again.");
+    }
+  }
+
+  async function emailSelectedDocument(type, emp){
+    const result = buildSelectedDocument(type, emp);
+    if(!result) return;
+    const datauri = result.doc.output("datauristring");
+    const base64 = datauri.split(",")[1];
+    try{
+      const res = await apiSend("/documents/email", "POST", {
+        employeeId: emp.id,
+        documentTitle: result.title,
+        filename: result.filename,
+        pdfBase64: base64
+      });
+      if(res.sent){
+        showToast(`${result.title} emailed to ${emp.email}.`);
+      } else if(res.reason === "smtp_not_configured"){
+        showToast("Email not sent — SMTP isn't set up in .env. You can still download the PDF.");
+      } else if(res.reason === "no_recipient"){
+        showToast("This employee has no email address on file.");
+      } else {
+        showToast(`Couldn't send the email: ${res.reason || "unknown error"}. Check the terminal running the server for details.`);
+      }
+    }catch(e){
+      showToast("Couldn't reach the server to send the email.");
+    }
+  }
+
+  function renderReports(main){
+    const employees = [...state.employees].sort((a,b)=> a.name.localeCompare(b.name));
+    const leaveRequests = [...state.leaveRequests];
+    const billClaims = [...state.billClaims];
+    const departments = [...new Set(employees.map(e => e.department))].sort();
+    const leaveYears = yearsFromDates(leaveRequests.map(r => r.start));
+    const billYears = yearsFromDates(billClaims.map(b => b.date));
+    const categories = ["Travel", "Lunch", "Mobile", "Other"];
+
+    const empColumns = [
+      { label:"Employee ID", key:"id" },
+      { label:"Name", key:"name" },
+      { label:"Role", key:"role" },
+      { label:"Title", key:"title" },
+      { label:"Department", key:"department" },
+      { label:"Email", key:"email" },
+      { label:"Phone", key:"phone" },
+      { label:"Start date", key:"startDate" },
+      { label:"Leave balance", key:"leaveBalance" },
+      { label:"Monthly salary", key:"monthlySalary" },
+      { label:"Travel allowance", key:"travelAllowance" },
+      { label:"Lunch allowance", key:"lunchAllowance" },
+      { label:"Mobile allowance", key:"mobileAllowance" }
+    ];
+    const leaveColumns = [
+      { label:"Employee", key:"employeeName" },
+      { label:"Employee ID", key:"employeeId" },
+      { label:"Start date", key:"start" },
+      { label:"End date", key:"end" },
+      { label:"Reason", key:"reason" },
+      { label:"Status", key:"status" },
+      { label:"Submitted", key:"submitted" }
+    ];
+    const billColumns = [
+      { label:"Employee", key:"employeeName" },
+      { label:"Employee ID", key:"employeeId" },
+      { label:"Category", key:"category" },
+      { label:"Date", key:"date" },
+      { label:"Amount", key:"amount" },
+      { label:"Description", key:"description" },
+      { label:"Status", key:"status" },
+      { label:"Submitted", key:"submitted" }
+    ];
+
+    const getEmpRows = () => {
+      const dept = document.getElementById("rp-emp-dept").value;
+      return dept === "all" ? employees : employees.filter(e => e.department === dept);
+    };
+    const getLeaveRows = () => {
+      const month = document.getElementById("rp-lv-month").value;
+      const year = document.getElementById("rp-lv-year").value;
+      return leaveRequests.filter(r => {
+        if(month === "all" && year === "all") return true;
+        const d = new Date(r.start);
+        if(isNaN(d)) return false;
+        if(month !== "all" && d.getMonth() !== parseInt(month, 10)) return false;
+        if(year !== "all" && d.getFullYear() !== parseInt(year, 10)) return false;
+        return true;
+      });
+    };
+    const getBillRows = () => {
+      const category = document.getElementById("rp-bl-category").value;
+      const month = document.getElementById("rp-bl-month").value;
+      const year = document.getElementById("rp-bl-year").value;
+      return billClaims.filter(b => {
+        if(category !== "all" && b.category !== category) return false;
+        if(month !== "all" || year !== "all"){
+          const d = new Date(b.date);
+          if(isNaN(d)) return false;
+          if(month !== "all" && d.getMonth() !== parseInt(month, 10)) return false;
+          if(year !== "all" && d.getFullYear() !== parseInt(year, 10)) return false;
+        }
+        return true;
+      });
+    };
+
+    main.innerHTML = `
+      <h2 class="page-title">Reports</h2>
+      <p class="page-sub">Download employee, leave, and expense data as CSV or Excel files — filter first if you only need part of it.</p>
+
+      <div class="card">
+        <h3>Employees</h3>
+        <p class="page-sub" style="margin-top:2px;">All employee accounts on record.</p>
+        <div class="form-row" style="margin-top:12px;">
+          <div class="field">
+            <label>Department</label>
+            <select id="rp-emp-dept">
+              <option value="all">All departments</option>
+              ${departments.map(d => `<option value="${d}">${d}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <button class="btn-secondary" id="rp-emp-download-csv">⬇ CSV</button>
+        <button class="btn-secondary" id="rp-emp-download-xlsx">⬇ Excel</button>
+      </div>
+
+      <div class="card">
+        <h3>Leave requests</h3>
+        <p class="page-sub" style="margin-top:2px;">All time-off requests, filtered by when the leave starts.</p>
+        <div class="form-row" style="margin-top:12px;">
+          <div class="field">
+            <label>Month</label>
+            <select id="rp-lv-month">
+              <option value="all">All months</option>
+              ${MONTH_NAMES.map((m, i) => `<option value="${i}">${m}</option>`).join("")}
+            </select>
+          </div>
+          <div class="field">
+            <label>Year</label>
+            <select id="rp-lv-year">
+              <option value="all">All years</option>
+              ${leaveYears.map(y => `<option value="${y}">${y}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <button class="btn-secondary" id="rp-lv-download-csv">⬇ CSV</button>
+        <button class="btn-secondary" id="rp-lv-download-xlsx">⬇ Excel</button>
+      </div>
+
+      <div class="card">
+        <h3>Bill claims</h3>
+        <p class="page-sub" style="margin-top:2px;">All expense claims, filtered by category and expense date.</p>
+        <div class="form-row" style="margin-top:12px;">
+          <div class="field">
+            <label>Category</label>
+            <select id="rp-bl-category">
+              <option value="all">All categories</option>
+              ${categories.map(c => `<option value="${c}">${c}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Month</label>
+            <select id="rp-bl-month">
+              <option value="all">All months</option>
+              ${MONTH_NAMES.map((m, i) => `<option value="${i}">${m}</option>`).join("")}
+            </select>
+          </div>
+          <div class="field">
+            <label>Year</label>
+            <select id="rp-bl-year">
+              <option value="all">All years</option>
+              ${billYears.map(y => `<option value="${y}">${y}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <button class="btn-secondary" id="rp-bl-download-csv">⬇ CSV</button>
+        <button class="btn-secondary" id="rp-bl-download-xlsx">⬇ Excel</button>
+      </div>
+
+      <div class="card">
+        <h3>Documents</h3>
+        <p class="page-sub" style="margin-top:2px;">
+          Auto-generate a professional, letterhead-styled A4 PDF for any employee, or email it to them directly — no typing it up by hand.
+        </p>
+        <div class="form-row" style="margin-top:12px;">
+          <div class="field">
+            <label>Employee</label>
+            <select id="rp-doc-emp">
+              ${employees.map(e => `<option value="${e.id}">${e.name} — ${e.id}</option>`).join("")}
+            </select>
+          </div>
+          <div class="field">
+            <label>Document type</label>
+            <select id="rp-doc-type">
+              ${Object.entries(DOC_TYPES).map(([key, t]) => `<option value="${key}">${t.label}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+        <div id="rp-doc-extra"></div>
+        <button class="btn-secondary" id="rp-doc-preview">👁 Preview</button>
+        <button class="btn-secondary" id="rp-doc-download">⬇ Download PDF</button>
+        <button class="btn-secondary" id="rp-doc-email">✉ Email to employee</button>
+      </div>
+    `;
+
+    document.getElementById("rp-emp-download-csv").addEventListener("click", ()=>{
+      downloadCSV(`employees_${todayStamp()}.csv`, empColumns, getEmpRows());
+    });
+    document.getElementById("rp-emp-download-xlsx").addEventListener("click", ()=>{
+      downloadExcel(`employees_${todayStamp()}.xlsx`, "Employees", empColumns, getEmpRows());
+    });
+
+    document.getElementById("rp-lv-download-csv").addEventListener("click", ()=>{
+      downloadCSV(`leave_requests_${todayStamp()}.csv`, leaveColumns, getLeaveRows());
+    });
+    document.getElementById("rp-lv-download-xlsx").addEventListener("click", ()=>{
+      downloadExcel(`leave_requests_${todayStamp()}.xlsx`, "Leave requests", leaveColumns, getLeaveRows());
+    });
+
+    document.getElementById("rp-bl-download-csv").addEventListener("click", ()=>{
+      downloadCSV(`bill_claims_${todayStamp()}.csv`, billColumns, getBillRows());
+    });
+    document.getElementById("rp-bl-download-xlsx").addEventListener("click", ()=>{
+      downloadExcel(`bill_claims_${todayStamp()}.xlsx`, "Bill claims", billColumns, getBillRows());
+    });
+
+    const getCertEmployee = () => employees.find(e => e.id === document.getElementById("rp-doc-emp").value);
+
+    function refreshDocExtraFields(){
+      const type = document.getElementById("rp-doc-type").value;
+      const emp = getCertEmployee();
+      document.getElementById("rp-doc-extra").innerHTML = emp ? docExtraFieldsHtml(type, emp) : "";
+    }
+    refreshDocExtraFields();
+    document.getElementById("rp-doc-type").addEventListener("change", refreshDocExtraFields);
+    document.getElementById("rp-doc-emp").addEventListener("change", refreshDocExtraFields);
+
+    document.getElementById("rp-doc-preview").addEventListener("click", ()=>{
+      const emp = getCertEmployee();
+      if(!emp) return showToast("Pick an employee first.");
+      previewSelectedDocument(document.getElementById("rp-doc-type").value, emp);
+    });
+    document.getElementById("rp-doc-download").addEventListener("click", ()=>{
+      const emp = getCertEmployee();
+      if(!emp) return showToast("Pick an employee first.");
+      downloadSelectedDocument(document.getElementById("rp-doc-type").value, emp);
+    });
+    document.getElementById("rp-doc-email").addEventListener("click", ()=>{
+      const emp = getCertEmployee();
+      if(!emp) return showToast("Pick an employee first.");
+      emailSelectedDocument(document.getElementById("rp-doc-type").value, emp);
+    });
+  }
+
+  function renderAccountRow(e, editingId){
+    if(editingId === e.id){
+      return `
+        <tr>
+          <td colspan="6">
+            <div style="padding:14px 4px;">
+              <h3 style="font-size:14.5px; margin:0 0 10px 0;">Editing ${e.name}</h3>
+              <div class="form-row">
+                <div class="field"><label>Leave balance (days)</label><input type="number" id="ed-leave-${e.id}" value="${e.leaveBalance}"></div>
+                <div class="field"><label>Monthly salary</label><input type="number" id="ed-salary-${e.id}" value="${e.monthlySalary || 0}"></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>Travel allowance</label><input type="number" id="ed-travel-${e.id}" value="${e.travelAllowance || 0}"></div>
+                <div class="field"><label>Lunch allowance</label><input type="number" id="ed-lunch-${e.id}" value="${e.lunchAllowance || 0}"></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>Mobile allowance</label><input type="number" id="ed-mobile-${e.id}" value="${e.mobileAllowance || 0}"></div>
+                <div class="field"><label>Attendance device ID</label><input type="text" id="ed-device-${e.id}" value="${e.deviceUserId || ""}" placeholder="ID/PIN set on the ZKTeco device"></div>
+              </div>
+              <button class="btn-secondary" data-save-edit="${e.id}" style="margin-right:8px;">Save changes</button>
+              <button class="btn-secondary" data-cancel-edit="${e.id}" style="background:var(--line); color:var(--ink-soft);">Cancel</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+    return `
+      <tr>
+        <td>${e.name}</td>
+        <td>${e.id}</td>
+        <td>${e.department}</td>
+        <td>${e.leaveBalance} days</td>
+        <td>$${(e.monthlySalary||0).toLocaleString()} base</td>
+        <td>
+          <button class="btn-secondary" data-edit="${e.id}" style="padding:6px 10px; font-size:12.5px; margin-right:6px;">Edit</button>
+          <button class="btn-secondary" data-reset-password="${e.id}" style="padding:6px 10px; font-size:12.5px; margin-right:6px;">Reset password</button>
+          ${e.id === state.currentUser.id ? "" : `<button class="btn-secondary" data-remove="${e.id}" style="padding:6px 10px; font-size:12.5px; background:var(--red-bg); color:var(--red);">Remove</button>`}
+        </td>
+      </tr>
+    `;
+  }
+
+  async function updateRequestStatus(id, status){
+    const r = state.leaveRequests.find(x => x.id === id);
+    if(!r) return;
+    try{
+      await apiSend("/leave-requests/" + id, "PATCH", { status });
+    }catch(e){
+      showToast("Couldn't update — check the server/database connection.");
+      return;
+    }
+    r.status = status;
+    showToast(`Request ${status}. Employee notified by email.`);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
